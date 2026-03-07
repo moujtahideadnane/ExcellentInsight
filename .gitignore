@@ -1,0 +1,121 @@
+# =========================
+# GitNexus
+# =========================
+.gitnexus/
+.agent/
+.agents/
+.claude/
+
+# =========================
+# Python
+# =========================
+venv/
+env/
+ENV/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+clear_jobs.py
+dev.ps1
+peek_job.py
+
+# =========================
+# Testing
+# =========================
+.pytest_cache/
+.coverage
+*.cover
+*.lcov
+htmlcov/
+.tox/
+coverage/
+.vitest/
+.ruff_cache/
+appmiddleware/
+# =========================
+# Environment files
+# =========================
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.local.example
+
+# =========================
+# Logs & Debug files
+# =========================
+*.log
+build_log*.txt
+debug_view.txt
+vars.txt
+*_debug.txt
+*_temp.txt
+last_job*.json
+job_info.json
+worker*.log
+
+# =========================
+# Node / Frontend
+# =========================
+node_modules/
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Frontend bundle analyzer
+.next/analyze/
+
+# =========================
+# Uploads (important)
+# =========================
+uploads/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.bak
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+.agent/
+.agents/
+.claude/
+*.sublime-*
+
+# =========================
+# Development notes
+# =========================
+MIGRATION_*.md
+SELF_CORRECTION_AUDIT.md
+
+# =========================
+# Database
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Temporary
+# =========================
+tmp/
+temp/
+*.tmp

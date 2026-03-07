@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    volumes:
+      - .:/app
+    environment:
+      - RELOAD=true
+
+  worker:
+    volumes:
+      - .:/app
+
+#  frontend:
+#    volumes:
+#      - ./frontend:/app
+#      - /app/node_modules
+#      - /app/.next
+#    environment:
+#      - WATCHPACK_POLLING=true # Useful for Docker on Windows/Mac

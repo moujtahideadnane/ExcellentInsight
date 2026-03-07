@@ -1,0 +1,197 @@
+"use client"
+
+import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import api from '@/lib/api'
+import { motion } from 'framer-motion'
+import { Server, Clock, ArrowRight, Loader2, FileText, Plus, AlertTriangle } from 'lucide-react'
+import { useJobStore } from '@/stores/job-store'
+import { cn } from '@/lib/utils'
+
+interface Job {
+  id: string
+  status: string
+  file_name?: string
+  created_at: string
+  file_size_bytes?: number
+  processing_time_ms?: number
+  llm_result?: { domain?: string } | null
+}
+
+const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  completed:  { color: '#EDEDED', bg: '#111111', border: '#333333', label: 'COMPILED' },
+  done:       { color: '#EDEDED', bg: '#111111', border: '#333333', label: 'ONLINE' },
+  failed:     { color: '#FF4444', bg: '#2A0808', border: '#5C1A1A', label: 'EXCEPTION' },
+  processing: { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'EXECUTING' },
+  pending:    { color: '#888888', bg: '#111111', border: '#333333', label: 'AWAIT' },
+  analyzing:  { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'ANALYZING' },
+  enriching:  { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'ENRICHING' },
+  parsing:    { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'PARSING' },
+}
+
+function formatBytes(bytes?: number): string | null {
+  if (!bytes) return null
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+export default function JobsPage() {
+  const router    = useRouter()
+  const { clearActiveJob } = useJobStore()
+  const [jobs,      setJobs]      = useState<Job[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error,     setError]     = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        const res = await api.get('/jobs')
+        setJobs(res.data?.jobs ?? res.data ?? [])
+      } catch (err: unknown) {
+        const axiosErr = err as { response?: { data?: { detail?: string } } }
+        setError(axiosErr.response?.data?.detail || 'Failed to load process history')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchJobs()
+  }, [])
+
+  return (
+    <div className="p-6 lg:p-8 max-w-5xl mx-auto min-h-full">
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 border-b border-[#333333] pb-8"
+      >
+        <div className="text-[10px] font-mono text-[#888888] uppercase tracking-widest mb-2">Resource Allocation Directory</div>
+        <h1 className="text-[32px] font-semibold text-[#EDEDED] tracking-tight leading-tight">
+          System <span className="text-[#888888]">Deployments</span>
+        </h1>
+        <p className="mt-3 text-[14px] text-[#888888] font-mono max-w-lg">
+          Query the execution history of previously deployed analytical nodes.
+        </p>
+      </motion.div>
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-32 gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-[#0070F3]" />
+          <span className="font-mono text-[#888888] text-[11px] uppercase tracking-widest">Querying database...</span>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-[4px] mb-6 bg-[#2A0808] border border-[#5C1A1A]">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-[#FF4444]" />
+          <p className="text-[#FF4444] text-[12px] font-mono">{error}</p>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && !error && jobs.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-32 text-center border border-dashed border-[#333333] rounded-[6px] bg-[#111111]"
+        >
+          <div className="h-12 w-12 flex items-center justify-center mb-4">
+            <Server className="h-6 w-6 text-[#333333]" />
+          </div>
+          <h3 className="text-[14px] font-semibold tracking-tight text-[#EDEDED] mb-2">Log Directory Empty</h3>
+          <p className="mb-6 max-w-sm text-[#888888] font-mono text-[11px] leading-relaxed">
+            There are no documented deployments in this workspace. Initialize a deployment to start capturing analytical outputs.
+          </p>
+          <button
+            onClick={() => {
+              clearActiveJob()
+              router.push('/dashboard')
+            }}
+            className="flex items-center gap-2 rounded-[4px] bg-[#EDEDED] text-[#000000] px-4 py-2 font-medium text-[12px] hover:bg-[#CCCCCC] transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Initialize Run
+          </button>
+        </motion.div>
+      )}
+
+      {/* Jobs list */}
+      {!isLoading && !error && jobs.length > 0 && (
+        <div className="grid grid-cols-1 gap-3">
+          {jobs.map((job, i) => {
+            const sc = STATUS_CONFIG[job.status] || STATUS_CONFIG['pending']!
+            const isClickable = job.status === 'completed' || job.status === 'done'
+            const displayName = job.file_name || `${job.id.slice(0, 12)}`
+            const sizeStr = formatBytes(job.file_size_bytes)
+            const domain = job.llm_result?.domain
+
+            return (
+              <motion.div
+                key={job.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                onClick={() => isClickable && router.push(`/dashboard/${job.id}`)}
+                className={cn(
+                  "group flex items-center justify-between p-4 rounded-[4px] transition-all bg-[#000000] border border-[#333333]",
+                  isClickable ? "cursor-pointer hover:border-[#888888]" : "opacity-70 grayscale"
+                )}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="h-8 w-8 rounded-[4px] bg-[#111111] border border-[#333333] flex items-center justify-center group-hover:bg-[#EDEDED] group-hover:border-[#EDEDED] transition-colors shrink-0">
+                    <FileText className="h-4 w-4 text-[#888888] group-hover:text-[#000000] transition-colors" />
+                  </div>
+                  
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-[13px] font-medium text-[#EDEDED] tracking-tight truncate">
+                         {displayName}
+                      </span>
+                      {sizeStr && (
+                        <>
+                          <div className="h-px w-3 bg-[#333333]" />
+                          <span className="text-[10px] font-mono text-[#888888] uppercase tracking-widest">
+                            {sizeStr}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-[#888888] flex items-center gap-1.5 uppercase tracking-wider">
+                         <Clock className="h-3 w-3" />
+                         {new Date(job.created_at).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {domain && (
+                        <>
+                           <div className="h-px w-3 bg-[#333333]" />
+                           <span className="text-[9px] font-mono text-[#0070F3] uppercase tracking-widest">{domain} schema</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 shrink-0">
+                   <div 
+                      className="px-2 py-1 rounded-[2px] text-[9px] font-mono uppercase tracking-widest border"
+                      style={{ backgroundColor: sc.bg, color: sc.color, borderColor: sc.border }}
+                   >
+                      {sc.label}
+                   </div>
+                   {isClickable && (
+                     <ArrowRight className="h-4 w-4 text-[#333333] group-hover:text-[#EDEDED] group-hover:translate-x-1 transition-all" />
+                   )}
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
