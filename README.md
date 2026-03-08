@@ -1,11 +1,11 @@
-# ExcellentInsight
+# ExcellentInsight - AI-Powered Excel & CSV Analysis Tool
 
 <div align="center">
-  <img src="/home/moadnane/.gemini/antigravity/brain/9de31ee5-3853-4e06-930e-f9e63c897720/excellent_insight_dashboard_hero_1772876158355.png" alt="ExcellentInsight Hero" width="800">
+  <img src="/home/moadnane/.gemini/antigravity/brain/9de31ee5-3853-4e06-930e-f9e63c897720/excellent_insight_dashboard_hero_1772876158355.png" alt="ExcellentInsight AI Dashboard - Transform Excel and CSV files into interactive dashboards with automatic KPI detection" width="800">
 
-  <h3>AI-Powered Spreadsheet Intelligence Platform</h3>
+  <h3>🚀 AI-Powered Spreadsheet Intelligence Platform for Excel & CSV Analysis</h3>
 
-  <p>Transform any Excel or CSV file into a comprehensive AI-powered dashboard in under 60 seconds. Zero configuration, instant insights.</p>
+  <p>Transform any Excel (.xlsx, .xls) or CSV file into a comprehensive AI-powered dashboard with automatic KPI detection in under 60 seconds. Zero configuration, instant business intelligence insights powered by OpenRouter AI.</p>
 
   <p>
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
@@ -14,6 +14,23 @@
     <img src="https://img.shields.io/badge/React-19-blue" alt="React 19">
   </p>
 </div>
+
+---
+
+## 🎯 What is ExcellentInsight?
+
+ExcellentInsight is an **open-source AI-powered data analysis platform** that automatically transforms Excel spreadsheets and CSV files into interactive business intelligence dashboards. Unlike traditional BI tools that require complex setup and configuration, ExcellentInsight uses **artificial intelligence** to automatically:
+
+- 📊 **Analyze Excel & CSV files** - Support for .xlsx, .xls, .csv formats
+- 🤖 **Detect KPIs automatically** - AI identifies key performance indicators from your data
+- 📈 **Generate interactive charts** - Bar charts, line graphs, pie charts, time series visualizations
+- 🔍 **Discover data insights** - Anomaly detection, trend forecasting, statistical analysis
+- 🏢 **Classify business domains** - Automatic detection of Finance, Sales, HR, Marketing data types
+- ⚡ **Process in real-time** - Sub-60 second analysis with live progress tracking
+
+**Perfect for:** Data analysts, business analysts, finance teams, sales managers, marketing professionals, small businesses, and anyone who works with spreadsheet data.
+
+**Technologies:** FastAPI, Next.js 15, React 19, PostgreSQL, Redis, Pandas, OpenRouter AI (GPT-4, Claude, Llama), Docker
 
 ---
 
@@ -85,13 +102,74 @@ graph TD
 - Node.js 20+ & Python 3.12+ (for local development)
 
 ### 2. Configure Environment
+
+#### Copy Environment Files
 ```bash
 cp .env.example .env
 cp frontend/.env.local.example frontend/.env.local
-
-# Edit .env and add your OpenRouter API key
-# OPENROUTER_API_KEY=your_key_here
 ```
+
+#### 🔑 OpenRouter API Configuration
+
+This project uses **[OpenRouter](https://openrouter.ai/)** for AI-powered analysis, which provides access to multiple LLM providers through a single API. OpenRouter offers **many free models** that work excellently with ExcellentInsight.
+
+##### Why OpenRouter?
+- **Free Models Available:** Access to powerful models at no cost
+- **Unified API:** Single interface for multiple LLM providers
+- **No Vendor Lock-in:** Easily switch between models
+- **Pay-as-you-go:** Only pay for what you use on premium models
+
+##### 📝 Setup Steps
+
+1. **Get Your API Key:**
+   - Visit [openrouter.ai](https://openrouter.ai/)
+   - Click "Sign Up" or "Log In"
+   - Navigate to [Keys](https://openrouter.ai/keys) section
+   - Create a new API key and copy it
+
+2. **Configure Your `.env` File:**
+   ```bash
+   # Required: Your OpenRouter API Key
+   OPENROUTER_API_KEY=sk-or-v1-your-actual-key-here
+
+   # Base URL (default, no need to change)
+   OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+
+   # Recommended Model (Trinity - Free & Powerful)
+   LLM_MODEL=arcee-ai/trinity-large-preview:free
+   LLM_FALLBACK_MODEL=openai/gpt-oss-120b:free
+   ```
+
+##### 🎯 Recommended Model: Trinity Large
+
+We **highly recommend** the **`arcee-ai/trinity-large-preview:free`** model for this project:
+
+- ✅ **Completely Free** (no rate limits)
+- ✅ **Excellent Performance** for data analysis tasks
+- ✅ **Fast Response Times**
+- ✅ **Strong Structured Output** (perfect for JSON schemas)
+- ✅ **Large Context Window**
+
+##### 🔄 Using Other Free Models
+
+OpenRouter offers many free models. To use a different one:
+
+1. Visit [openrouter.ai/models](https://openrouter.ai/models)
+2. In the search box, type **"free"**
+3. Browse available free models
+4. Copy the model ID (e.g., `google/gemini-2.0-flash-exp:free`)
+5. Update your `.env` file:
+   ```bash
+   LLM_MODEL=your-chosen-model-id:free
+   ```
+
+**Popular Free Alternatives:**
+- `google/gemini-2.0-flash-exp:free` - Fast and efficient
+- `meta-llama/llama-3.3-70b-instruct:free` - Strong reasoning
+- `openai/gpt-4o-mini:free` - Balanced performance
+- `anthropic/claude-3-haiku:free` - Quick responses
+
+> **💡 Tip:** Some models may have rate limits. If you encounter limits, switch to another free model or consider OpenRouter's affordable paid tiers.
 
 ### 3. Start Application
 ```bash
@@ -140,6 +218,36 @@ Contributions are welcome! Please fork the repository, created a feature branch,
 
 ---
 
+## 📚 Use Cases
+
+ExcellentInsight is perfect for:
+
+- **📊 Business Intelligence** - Analyze sales data, financial reports, and performance metrics
+- **💼 Financial Analysis** - Quarterly reports, budget analysis, expense tracking
+- **📈 Sales Analytics** - Revenue tracking, sales pipeline analysis, conversion metrics
+- **👥 HR Analytics** - Employee data, hiring metrics, performance reviews
+- **📱 Marketing Analytics** - Campaign performance, ROI analysis, customer data
+- **🏪 E-commerce** - Product sales, inventory analysis, customer behavior
+- **🎓 Academic Research** - Dataset analysis, statistical research, data visualization
+- **🔬 Data Science Projects** - Quick exploratory data analysis (EDA), prototype dashboards
+
+---
+
+## 🔑 Keywords & Tags
+
+`ai-analytics` `excel-parser` `csv-analysis` `dashboard-generator` `data-visualization` `kpi-detection` `business-intelligence` `spreadsheet-analysis` `fastapi` `nextjs` `python-data-analysis` `react-dashboard` `pandas-dataframes` `openrouter-ai` `llm-integration` `postgresql` `redis` `docker` `async-processing` `real-time-analytics` `zero-configuration` `automatic-insights` `trend-forecasting` `anomaly-detection` `open-source-bi` `self-hosted` `free-ai-models` `data-pipeline` `multi-tenant` `interactive-charts`
+
+---
+
 <div align="center">
   <strong>Built with ❤️ for Data Lovers everywhere.</strong>
+
+  <p>
+    <a href="https://github.com/moadnane/ExcellentInsight/issues">Report Bug</a> •
+    <a href="https://github.com/moadnane/ExcellentInsight/issues">Request Feature</a> •
+    <a href="#-quick-start">Quick Start</a> •
+    <a href="#-what-is-excellentinsight">Documentation</a>
+  </p>
+
+  **⭐ Star this repo if you find it useful!**
 </div>

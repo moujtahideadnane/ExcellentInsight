@@ -14,8 +14,23 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "keywords": [
+    "ai-analytics",
+    "excel-parser",
+    "csv-analysis",
+    "dashboard-generator",
+    "spreadsheet-intelligence",
+    "data-visualization",
+    "kpi-detection",
+    "business-intelligence",
+    "fastapi",
+    "nextjs",
+    "openrouter",
+    "llm-integration",
+    "pandas-dataframes",
+    "react-dashboard"
+  ],
+  "author": "ExcellentInsight Team",
+  "license": "MIT",
+  "description": "AI-powered spreadsheet intelligence platform that transforms Excel and CSV files into interactive dashboards with automatic KPI detection, trend analysis, and insights in under 60 seconds"
 }
