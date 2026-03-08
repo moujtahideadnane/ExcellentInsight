@@ -53,45 +53,38 @@ ExcellentInsight is an **open-source AI-powered data analysis platform** that au
 
 ---
 
-## 🏗️ Architecture & Data Flow
+## 📚 Documentation
 
-```mermaid
-graph TD
-    A[Upload Spreadsheet] -->|Validation| B(Parsing Step)
-    B -->|Metadata & Stats| C(Schema Detection)
-    C -->|Detected Entities| D(LLM Enrichment)
-    D -->|KPIs & Charts| E[Dashboard Builder]
-    E --> F{Interactive UI}
-    
-    subgraph "Backend (FastAPI)"
-    B
-    C
-    D
-    E
-    end
-    
-    subgraph "Frontend (Next.js)"
-    F
-    end
-    
-    subgraph "Infrastructure"
-    G[(PostgreSQL)]
-    H[(Redis Cache)]
-    I[ARQ Worker]
-    end
-    
-    D -.->|OpenRouter API| J[LLM]
-    I -->|Background Jobs| B
-    E -->|Persistence| G
-    B -.->|Cache| H
-```
+### Core Documentation
 
-### Tech Stack
+| Document | Description |
+|----------|-------------|
+| **[Features Guide](docs/FEATURES.md)** | Comprehensive feature documentation, capabilities, and configuration options |
+| **[API Reference](docs/API.md)** | Complete REST API documentation with examples and schemas |
+| **[Architecture Guide](docs/ARCHITECTURE.md)** | System design, data flow, database schema, and deployment architecture |
 
-- **Backend:** FastAPI (async), SQLAlchemy 2 (asyncpg), ARQ, Pandas
-- **Frontend:** Next.js 15, React 19, TailwindCSS 4, Visx
-- **Infrastructure:** PostgreSQL 16, Redis 7, Docker
-- **LLM Intelligence:** OpenRouter (GPT-4o / Claude 3.5 Sonnet)
+### Quick Links
+
+- 🚀 **[Quick Start](#-quick-start)** - Get up and running in 5 minutes
+- 🔧 **[Configuration](#2-configure-environment)** - Environment setup and API keys
+- 📖 **[Usage Examples](#-usage)** - Common workflows and use cases
+- 🐛 **[Troubleshooting](https://github.com/moadnane/ExcellentInsight/issues)** - Known issues and solutions
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+**FastAPI** (async) · **SQLAlchemy 2** (asyncpg) · **Polars** · **ARQ** · **PostgreSQL 16** · **Redis 7**
+
+### Frontend
+**Next.js 15** · **React 19** · **TypeScript** · **TailwindCSS 4** · **Visx** · **Zustand**
+
+### AI/ML
+**OpenRouter API** · **Trinity Model** (Free) · **GPT-4** · **Claude 3.5** · **Llama 3**
+
+### Infrastructure
+**Docker** · **Docker Compose** · **Nginx** · **Alembic** (migrations)
 
 ---
 
