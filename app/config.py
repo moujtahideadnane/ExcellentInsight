@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"  # development | staging | production
     DEBUG: bool = False
     API_VERSION: str = "v1"
+    PORT: int = 5000
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
     # ── Database ──
