@@ -105,6 +105,8 @@ Thumbs.db
 # =========================
 MIGRATION_*.md
 SELF_CORRECTION_AUDIT.md
+DEPLOYMENT.md
+nginx.conf
 
 # =========================
 # Database
