@@ -1,6 +1,10 @@
 import asyncio
 import shutil
+import sys
 from pathlib import Path
+
+# Add the project root to sys.path
+sys.path.append(str(Path(__file__).parent.parent))
 
 import redis.asyncio as redis
 from sqlalchemy import text

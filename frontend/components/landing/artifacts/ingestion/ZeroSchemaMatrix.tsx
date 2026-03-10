@@ -48,13 +48,13 @@ export function ZeroSchemaMatrix() {
     setIsSynthesizing(true)
 
     const sequence = [
-      () => setLogs(prev => [...prev, "[INFO] Initiating Zero-Schema Parser..."]),
-      () => setLogs(prev => [...prev, "[INFO] Reading 6 rows (0.01KB)..."]),
-      () => setLogs(prev => [...prev, "[OK]   Delimiter detected: ','"]),
-      () => setLogs(prev => [...prev, "[WARN] Coercing 'ip_address' to INET"]),
-      () => setLogs(prev => [...prev, "[OK]   AST generated in 1.2ms."]),
+      () => setLogs(prev => [...prev, "[INFO] Uploading sales_data_Q4.xlsx..."]),
+      () => setLogs(prev => [...prev, "[INFO] Reading Excel file (6 rows, 0.8KB)..."]),
+      () => setLogs(prev => [...prev, "[OK]   File structure validated"]),
+      () => setLogs(prev => [...prev, "[WARN] Auto-converting 'ip_address' to INET type"]),
+      () => setLogs(prev => [...prev, "[OK]   AI schema detection complete in 1.2s"]),
       () => {
-        setLogs(prev => [...prev, "[OK]   Synthesized 8 columns."])
+        setLogs(prev => [...prev, "[OK]   Detected 8 columns with data types."])
         setIsSynthesizing(false)
         setSynthesized(true)
       }
@@ -72,11 +72,11 @@ export function ZeroSchemaMatrix() {
       animate={controls}
       className="py-32 px-6 md:px-12 max-w-7xl mx-auto border-t border-[#222222] relative"
     >
-      <div className="mb-16 max-w-2xl">
-        <div className="text-[10px] font-mono text-[#888888] py-1 px-2 border border-[#333333] rounded-[4px] w-fit mb-4">ARTIFACT I : INGESTION</div>
-        <h2 className="text-[32px] md:text-[48px] font-bold tracking-tight mb-4">The ZeroSchema Matrix.</h2>
+      <div className="mb-16 max-w-2xl" id="features">
+        <div className="text-[10px] font-mono text-[#888888] py-1 px-2 border border-[#333333] rounded-[4px] w-fit mb-4">FEATURE I : INTELLIGENT UPLOAD</div>
+        <h2 className="text-[32px] md:text-[48px] font-bold tracking-tight mb-4">Zero-Schema File Upload.</h2>
         <p className="text-[#888888] text-[16px] leading-relaxed">
-          Drop in raw, chaotic data. The engine immediately infers types, builds relational schemas, and readies the payload for distributed compute. No configuration required.
+          Upload any Excel or CSV file without configuration. Our AI engine automatically detects column types, relationships between sheets, and data structures in seconds.
         </p>
       </div>
 
@@ -87,20 +87,20 @@ export function ZeroSchemaMatrix() {
           <div className="flex items-center justify-between border-b border-[#222222] pb-4">
             <div className="flex items-center gap-2 text-[#888888] text-sm font-mono">
               <FileText className="h-4 w-4" />
-              <span>raw_dump_2026.csv</span>
+              <span>sales_data_Q4.xlsx</span>
             </div>
             {!synthesized && (
-              <button 
+              <button
                 onClick={handleSynthesize}
                 disabled={isSynthesizing}
                 className="text-[12px] font-mono bg-white text-black px-3 py-1 rounded-[4px] hover:bg-[#CCCCCC] transition-colors disabled:opacity-50"
               >
-                {isSynthesizing ? 'SYNTHESIZING...' : 'SYNTHESIZE ->'}
+                {isSynthesizing ? 'ANALYZING...' : 'ANALYZE FILE ->'}
               </button>
             )}
             {synthesized && (
                <div className="text-[12px] font-mono text-[#00E5FF] flex items-center gap-1">
-                 <CheckCircle2 className="h-3.5 w-3.5" /> MAPPED
+                 <CheckCircle2 className="h-3.5 w-3.5" /> SCHEMA DETECTED
                </div>
             )}
           </div>
@@ -143,13 +143,13 @@ export function ZeroSchemaMatrix() {
         {/* Right: The Structured Layout */}
         <div className="bg-[#050505] p-6 lg:p-8 flex flex-col gap-6 min-h-[400px]">
            <div className="text-[#888888] text-sm font-mono border-b border-[#222222] pb-4">
-             AST Schema Map
+             Auto-Detected Schema
            </div>
 
            <div className="flex-1 flex flex-col justify-center">
              {!synthesized ? (
                <div className="text-center text-[#444444] font-mono text-[12px]">
-                 WAITING FOR INGESTION...
+                 WAITING FOR FILE UPLOAD...
                </div>
              ) : (
                <div className="flex flex-col gap-2">

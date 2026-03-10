@@ -96,17 +96,17 @@ function TypewriterText({ text, delay = 0, className }: { text: string; delay?: 
   return <span ref={ref} className={className}>{displayed}</span>
 }
 
-/* ── Terminal Output Simulation (Typology E Dashboard Portal) ────── */
+/* ── Terminal Output Simulation (Excel Analysis) ────── */
 function TerminalOutput() {
   const lines = [
-    "[INFO] Initializing inference engine...",
-    "[OK]   V8 Engine ready.",
-    "[WARN] Schema mismatch in generic_data_2026.csv. Attempting auto-resolution.",
-    "[OK]   Schema resolved: Detected 12 columns, 4.2M rows.",
-    "[INFO] Allocating tensor buffers...",
-    "[OK]   Correlations detected across 3 sheets.",
-    "[INFO] Building predictive model...",
-    "[OK]   Analysis complete in 12.4ms."
+    "[INFO] Processing sales_report_Q4.xlsx...",
+    "[OK]   File uploaded: 3 sheets, 4.2MB",
+    "[INFO] Auto-detecting schema and data types...",
+    "[OK]   Detected 12 columns, 15,420 rows across sheets",
+    "[INFO] AI analyzing business metrics...",
+    "[OK]   Identified 8 KPIs: Revenue, Growth, Conversion Rate...",
+    "[INFO] Generating interactive dashboard...",
+    "[OK]   Analysis complete. Dashboard ready in 47.3s"
   ]
 
   const [visibleLines, setVisibleLines] = useState<number>(0)
@@ -208,16 +208,16 @@ export default function LandingPage() {
         scrolled ? "bg-black/90 backdrop-blur-md border-b border-[#333333]" : "bg-transparent"
       )}>
         <div className="flex items-center gap-3">
-          <div className="h-6 w-6 relative bg-white flex items-center justify-center rounded-[4px] overflow-hidden">
-             <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-0.5" />
+          <div className="h-7 w-7 relative bg-white flex items-center justify-center rounded-[5px] overflow-hidden shadow-sm">
+             <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-1" />
           </div>
-          <span className="font-semibold tracking-tight text-[15px]">ExcellentInsight</span>
+          <span className="font-semibold tracking-tight text-[16px]">ExcellentInsight</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-[13px] font-medium text-[#888888]">
-          <Link href="#features" className="hover:text-white transition-colors">Infrastructure</Link>
-          <Link href="#process" className="hover:text-white transition-colors">Documentation</Link>
-          <Link href="#security" className="hover:text-white transition-colors">Security</Link>
+          <Link href="#features" className="hover:text-white transition-colors">Features</Link>
+          <Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link>
+          <Link href="#use-cases" className="hover:text-white transition-colors">Use Cases</Link>
         </div>
 
         <div className="flex items-center gap-6 text-[13px] font-medium">
@@ -243,23 +243,23 @@ export default function LandingPage() {
         <div className="flex-1 flex flex-col items-start gap-8 z-10 w-full">
 
           <h1 className="text-[clamp(3.5rem,8vw,6rem)] font-bold leading-[0.9] tracking-tighter">
-            Develop with <br className="hidden md:block" />
-            <span className="text-[#888888]">intelligence.</span>
+            Transform Excel <br className="hidden md:block" />
+            <span className="text-[#888888]">into insights.</span>
           </h1>
 
           <p className="text-[16px] text-[#888888] max-w-md leading-relaxed">
-            <TypewriterText text="ExcellentInsight is the infrastructure for instant data analysis. Drop terabytes of unschematized spreadsheets, retrieve perfectly mapped relational models in milliseconds." />
+            <TypewriterText text="Upload any Excel or CSV file. AI automatically detects KPIs, generates interactive dashboards, and surfaces actionable insights in under 60 seconds. Zero configuration required." />
           </p>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="flex items-center gap-4 mt-4 w-full flex-wrap">
             <MagneticButton>
               <Link href="/signup" className="bg-white text-black px-6 py-3 rounded-[6px] text-sm font-medium hover:bg-[#CCCCCC] transition-colors flex items-center gap-2">
-                Start Building <ArrowRight className="h-4 w-4" />
+                Analyze Your First File <ArrowRight className="h-4 w-4" />
               </Link>
             </MagneticButton>
-            <Link href="#" className="px-6 py-3 rounded-[6px] text-sm font-medium text-[#888888] bg-[#111111] border border-[#333333] hover:text-white hover:border-[#888888] transition-colors flex items-center gap-2">
+            <Link href="/dashboard" className="px-6 py-3 rounded-[6px] text-sm font-medium text-[#888888] bg-[#111111] border border-[#333333] hover:text-white hover:border-[#888888] transition-colors flex items-center gap-2">
               <Terminal className="h-4 w-4" />
-              <code>npx excellent-cli</code>
+              View Sample Dashboard
             </Link>
           </motion.div>
         </div>
@@ -269,14 +269,16 @@ export default function LandingPage() {
             {mounted && <TerminalOutput />}
           </motion.div>
           
-          {/* Dashboard Metrics Grid (Typology E) */}
+          {/* Dashboard Metrics Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#333333] border border-[#333333] rounded-[6px] mt-8 overflow-hidden">
              {[
-               { val: 12.4, l: 'MS/Query' }, { val: 99.9, l: '% Uptime' }, 
-               { val: 400, l: 'TB Scaled' }, { val: 0, l: 'Config' }
+               { val: 60, l: 'Sec Analysis', suffix: '' },
+               { val: 15, l: 'K+ Files', suffix: '' },
+               { val: 99, l: '% Accuracy', suffix: '' },
+               { val: 0, l: 'Config', suffix: '' }
              ].map((s, i) => (
                <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.1 }} className="bg-[#111111] p-4 flex flex-col justify-center items-center gap-1 hover:bg-[#1C1C1C] transition-colors cursor-default">
-                  <span className="font-mono text-[18px] font-medium text-white"><Counter target={s.val} /></span>
+                  <span className="font-mono text-[18px] font-medium text-white"><Counter target={s.val} suffix={s.suffix} /></span>
                   <span className="text-[10px] tracking-widest uppercase text-[#888888]">{s.l}</span>
                </motion.div>
              ))}
@@ -296,23 +298,44 @@ export default function LandingPage() {
       {/* ── ARTIFACT IV : InferenceEngine ── */}
       <InferenceEngine />
 
-      {/* ── Call To Action (High contrast) ── */}
-      <section className="py-32 px-6 border-t border-[#222222]">
+      {/* ── Call To Action ── */}
+      <section className="py-32 px-6 border-t border-[#222222]" id="get-started">
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8" data-animate>
-          <div className="h-12 w-12 relative bg-white flex items-center justify-center rounded-[8px] overflow-hidden">
-             <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-1.5" />
+          <div className="h-14 w-14 relative bg-white flex items-center justify-center rounded-[10px] overflow-hidden shadow-lg">
+             <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-2" />
           </div>
           <h2 className="text-[clamp(2.5rem,5vw,4rem)] font-bold tracking-tighter leading-[1]">
-            Deploy your first <br/> dashboard today.
+            Transform your spreadsheets <br/> into intelligence today.
           </h2>
+          <p className="text-[#888888] text-[16px] max-w-2xl leading-relaxed">
+            Join thousands of teams using ExcellentInsight to analyze Excel and CSV files with AI.
+            No credit card required. Start with our free tier and upgrade as you grow.
+          </p>
+
+          {/* Feature highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-8 mb-8">
+            <div className="flex flex-col items-center gap-2 p-4">
+              <div className="text-[#EDEDED] font-mono text-[24px] font-bold">60s</div>
+              <div className="text-[#888888] text-[13px]">Average analysis time</div>
+            </div>
+            <div className="flex flex-col items-center gap-2 p-4">
+              <div className="text-[#EDEDED] font-mono text-[24px] font-bold">Auto</div>
+              <div className="text-[#888888] text-[13px]">KPI detection powered by AI</div>
+            </div>
+            <div className="flex flex-col items-center gap-2 p-4">
+              <div className="text-[#EDEDED] font-mono text-[24px] font-bold">Zero</div>
+              <div className="text-[#888888] text-[13px]">Configuration required</div>
+            </div>
+          </div>
+
           <div className="flex items-center gap-4 mt-4">
             <MagneticButton>
               <Link href="/signup" className="bg-white text-black px-8 py-3 rounded-[6px] font-medium hover:bg-[#CCCCCC] transition-colors text-sm">
-                Start Deployment
+                Start Free Analysis
               </Link>
             </MagneticButton>
-            <Link href="/contact" className="px-8 py-3 rounded-[6px] font-medium text-white border border-[#333333] hover:bg-[#111111] transition-colors text-sm">
-              Contact Sales
+            <Link href="/dashboard" className="px-8 py-3 rounded-[6px] font-medium text-white border border-[#333333] hover:bg-[#111111] transition-colors text-sm">
+              View Demo Dashboard
             </Link>
           </div>
         </div>
@@ -321,15 +344,15 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="border-t border-[#222222] py-12 px-6 md:px-12 text-[#888888] text-[13px] flex flex-col md:flex-row items-center justify-between gap-6 max-w-7xl mx-auto w-full">
          <div className="flex items-center gap-2 font-mono">
-            <div className="h-4 w-4 relative bg-white flex items-center justify-center rounded-[2px] overflow-hidden">
-               <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-px" />
+            <div className="h-5 w-5 relative bg-white flex items-center justify-center rounded-[3px] overflow-hidden">
+               <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-0.5" />
             </div>
             ExcellentInsight © 2026
          </div>
          <div className="flex items-center gap-6 font-medium">
-            <Link href="#" className="hover:text-white transition-colors">Documentation</Link>
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
          </div>
       </footer>
     </div>

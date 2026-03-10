@@ -66,7 +66,8 @@ export default function InsightView({ insights }: InsightViewProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#333333] border border-[#333333] rounded-[6px] overflow-hidden">
         {insights.map((insight, index) => {
-          const config = severityConfig[insight.severity as keyof typeof severityConfig] || severityConfig.low!
+          const fallback = severityConfig.info || severityConfig.low || { icon: Info, border: '', bg: '', text: '', label: '' }
+          const config = severityConfig[insight.severity as keyof typeof severityConfig] || fallback
           const Icon = config.icon
           const TypeIcon = TYPE_ICONS[insight.type] || Info
 

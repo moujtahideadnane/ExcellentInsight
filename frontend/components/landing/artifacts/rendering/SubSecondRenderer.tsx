@@ -29,9 +29,9 @@ export function SubSecondRenderer() {
   
   const [level, setLevel] = useState<0 | 1 | 2>(0)
   const levels = [
-    { label: '10K Rows', points: 100, variance: 20, timeMs: 4.2 },
-    { label: '1M Rows', points: 400, variance: 80, timeMs: 12.8 },
-    { label: '100M Rows', points: 1200, variance: 150, timeMs: 44.1 },
+    { label: '1K Rows', points: 100, variance: 20, timeMs: 24.2 },
+    { label: '50K Rows', points: 400, variance: 80, timeMs: 38.5 },
+    { label: '500K Rows', points: 1200, variance: 150, timeMs: 58.7 },
   ]
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -66,11 +66,11 @@ export function SubSecondRenderer() {
       animate={controls}
       className="py-32 px-6 md:px-12 max-w-7xl mx-auto border-t border-[#222222] relative"
     >
-      <div className="mb-16 max-w-2xl">
-        <div className="text-[10px] font-mono text-[#888888] py-1 px-2 border border-[#333333] rounded-[4px] w-fit mb-4">ARTIFACT II : COMPUTE</div>
-        <h2 className="text-[32px] md:text-[48px] font-bold tracking-tight mb-4">Sub-Second Render Engine.</h2>
+      <div className="mb-16 max-w-2xl" id="how-it-works">
+        <div className="text-[10px] font-mono text-[#888888] py-1 px-2 border border-[#333333] rounded-[4px] w-fit mb-4">FEATURE II : VISUALIZATION</div>
+        <h2 className="text-[32px] md:text-[48px] font-bold tracking-tight mb-4">Instant Dashboard Generation.</h2>
         <p className="text-[#888888] text-[16px] leading-relaxed">
-          The visualization layer runs on a highly optimized Canvas/SVG hybrid. We push aggregation to the Edge and render millions of data points at an unwavering 60 frames per second.
+          Our AI automatically generates interactive charts and visualizations from your data. Handle datasets from thousands to millions of rows with smooth, responsive rendering at 60 FPS.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export function SubSecondRenderer() {
             </div>
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-[#888888]" />
-              <span className="text-[#888888] font-mono text-[12px]">Latency: {activeLevel.timeMs.toFixed(1)}ms</span>
+              <span className="text-[#888888] font-mono text-[12px]">Analysis: {activeLevel.timeMs.toFixed(1)}s</span>
             </div>
           </div>
         </div>
@@ -134,9 +134,9 @@ export function SubSecondRenderer() {
               />
            </svg>
 
-           {/* Edge Overlay */}
+           {/* Stats Overlay */}
            <div className="absolute bottom-4 right-4 text-[10px] font-mono text-[#444444]">
-             RENDER: HYBRID / MEM: 14.2MB
+             CHART ENGINE: SVG/CANVAS HYBRID
            </div>
         </div>
 

@@ -81,8 +81,10 @@ function AccountSection() {
     try {
       const res = await api.patch('/settings/profile', { display_name: displayName })
       setProfile(res.data)
-      const tokens = useAuthStore.getState()
-      setAuth({ ...storeUser!, display_name: res.data.display_name }, tokens.accessToken!, tokens.refreshToken!)
+      if (storeUser) {
+        const tokens = useAuthStore.getState()
+        setAuth({ ...storeUser, display_name: res.data.display_name }, tokens.accessToken || '', tokens.refreshToken || '')
+      }
       toast.success('Identity profile updated')
     } catch (err) {
       toast.error(getErrorMessage(err))

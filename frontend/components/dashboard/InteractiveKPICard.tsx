@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, Minus, Activity, Edit3, Save, X, Info } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Activity, Edit3, Save, X, Info, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KPI } from '@/types/dashboard'
 
@@ -10,6 +10,7 @@ interface InteractiveKPICardProps {
   kpi: KPI
   index: number
   onUpdateFormula?: (newFormula: string) => Promise<void>
+  onDelete?: () => Promise<void>
 }
 
 const priorityStyles: Record<string, { badge: string; dot: string }> = {
@@ -65,11 +66,12 @@ function formatKpiValue(value: number | string | null, format?: string, unit?: s
   return { display: formatted, suffix: unit ?? '' }
 }
 
-export default function InteractiveKPICard({ kpi, index, onUpdateFormula }: InteractiveKPICardProps) {
+export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDelete }: InteractiveKPICardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editFormula, setEditFormula] = useState(kpi.formula || '')
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const { display, suffix } = formatKpiValue(kpi.value, kpi.format, kpi.unit)
   const isNA = display === 'N/A'
@@ -86,6 +88,19 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula }: Inte
       setIsEditing(false)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onDelete) return
+
+    setIsDeleting(true)
+    try {
+      await onDelete()
+    } catch (error) {
+      console.error('Failed to delete KPI:', error)
+      setIsDeleting(false)
     }
   }
 
@@ -108,11 +123,13 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula }: Inte
             {/* Header */}
             <div className="flex items-start justify-between gap-2 z-10">
               <p className="text-[11px] font-mono uppercase tracking-widest text-[#888888] leading-tight truncate">{kpi.label}</p>
-              {kpi.priority && (
-                <div className={cn("px-2 py-0.5 rounded-[4px] text-[9px] font-mono border uppercase tracking-wider shrink-0", pConf?.badge)}>
-                  {kpi.priority}
-                </div>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {kpi.priority && (
+                  <div className={cn("px-2 py-0.5 rounded-[4px] text-[9px] font-mono border uppercase tracking-wider", pConf?.badge)}>
+                    {kpi.priority}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Value */}
@@ -182,14 +199,31 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula }: Inte
             <div className="relative z-10 flex flex-col h-full">
                 <div className="flex items-center justify-between mb-2">
                     <h4 className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">Calculation Context</h4>
-                    {!isEditing && onUpdateFormula && (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
-                            className="p-1 rounded-[4px] bg-[#000000] border border-[#333333] hover:border-[#888888] hover:text-[#EDEDED] text-[#888888] transition-colors"
-                        >
-                            <Edit3 className="h-3.5 w-3.5" />
-                        </button>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                        {!isEditing && onDelete && (
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="p-1 rounded-[4px] bg-[#2A0808] border border-[#5C1A1A] hover:border-[#FF4444] text-[#FF4444] transition-all disabled:opacity-50"
+                                title="Delete KPI"
+                            >
+                                {isDeleting ? (
+                                    <Activity className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                            </button>
+                        )}
+                        {!isEditing && onUpdateFormula && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                                className="p-1 rounded-[4px] bg-[#000000] border border-[#333333] hover:border-[#888888] hover:text-[#EDEDED] text-[#888888] transition-colors"
+                                title="Edit Formula"
+                            >
+                                <Edit3 className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {isEditing ? (

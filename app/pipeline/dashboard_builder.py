@@ -33,6 +33,89 @@ def find_date_columns(schema: DetectedSchema, sheet_name: str) -> List[str]:
     return date_cols
 
 
+def detect_correlation_insights(
+    dataframes: Dict[str, pl.DataFrame],
+    schema: DetectedSchema,
+    threshold: float = 0.7,
+) -> List[Dict[str, Any]]:
+    """Detect interesting correlations between numeric columns and generate insights.
+
+    Args:
+        dataframes: Dictionary of sheet_name -> DataFrame
+        schema: Detected schema with column information
+        threshold: Minimum absolute correlation value to report (default 0.7)
+
+    Returns:
+        List of insight dictionaries with correlation findings
+    """
+    insights = []
+
+    for sheet in schema.sheets:
+        if sheet.name not in dataframes:
+            continue
+
+        df = dataframes[sheet.name]
+
+        # Find numeric columns
+        numeric_cols = []
+        for col in sheet.columns:
+            col_type = (col.inferred_type or "").lower()
+            if any(t in col_type for t in ["int", "float", "decimal", "number"]) and col.name in df.columns:
+                numeric_cols.append(col.name)
+
+        # Need at least 2 numeric columns for correlation
+        if len(numeric_cols) < 2:
+            continue
+
+        # Check pairs of numeric columns
+        for i, col1 in enumerate(numeric_cols):
+            for col2 in numeric_cols[i+1:]:
+                try:
+                    # Compute correlation
+                    corr_value = df.select(pl.corr(col1, col2)).item()
+
+                    if corr_value is None or abs(corr_value) < threshold:
+                        continue
+
+                    # Generate insight based on correlation strength and direction
+                    if corr_value > 0:
+                        direction = "positive"
+                        interpretation = "increase together"
+                    else:
+                        direction = "negative"
+                        interpretation = "move in opposite directions"
+
+                    if abs(corr_value) >= 0.9:
+                        strength = "very strong"
+                        severity = "high"
+                    elif abs(corr_value) >= 0.7:
+                        strength = "strong"
+                        severity = "medium"
+                    else:
+                        strength = "moderate"
+                        severity = "info"
+
+                    insights.append({
+                        "type": "correlation",
+                        "severity": severity,
+                        "title": f"{strength.title()} {direction.title()} Correlation Detected",
+                        "text": f"{col1} and {col2} show a {strength} {direction} correlation ({corr_value:.2f}) in '{sheet.name}' - they {interpretation}.",
+                        "metadata": {
+                            "sheet": sheet.name,
+                            "column1": col1,
+                            "column2": col2,
+                            "correlation": round(corr_value, 3),
+                            "direction": direction,
+                        }
+                    })
+
+                except Exception as e:
+                    logger.debug(f"Could not compute correlation between {col1} and {col2}: {e}")
+                    continue
+
+    return insights
+
+
 def smart_format_value(val: Optional[float], unit: Optional[str], fmt: Optional[str]) -> tuple:
     """
     Abbreviate large numbers and round time values.
@@ -723,6 +806,8 @@ def build_dashboard(
                         aggr_expr = aggr_expr.std()
                     elif agg_type == "var":
                         aggr_expr = aggr_expr.var()
+                    elif agg_type == "mode":
+                        aggr_expr = aggr_expr.mode().first()
                     elif agg_type == "count":
                         aggr_expr = aggr_expr.count()
                     else:
@@ -744,6 +829,9 @@ def build_dashboard(
                         val = df[col_name].std()
                     elif kpi_agg == "var":
                         val = df[col_name].var()
+                    elif kpi_agg == "mode":
+                        mode_result = df[col_name].mode()
+                        val = mode_result[0] if len(mode_result) > 0 else None
                     elif kpi_agg == "count":
                         val = df[col_name].count()
                     elif "percentile" in kpi_formula.lower():
@@ -1001,6 +1089,9 @@ def build_dashboard(
                     aggr_expr = aggr_expr.max()
                 elif agg_type == "min":
                     aggr_expr = aggr_expr.min()
+                elif agg_type == "mode":
+                    # Mode: most frequent value
+                    aggr_expr = aggr_expr.mode().first()
                 else:
                     aggr_expr = aggr_expr.sum()
 
@@ -1184,5 +1275,14 @@ def build_dashboard(
 
     dashboard["relationships"] = [asdict(r) for r in schema.relationships]
     dashboard["joins"] = [j.model_dump() if hasattr(j, "model_dump") else j for j in enrichment.joins]
+
+    # Add correlation insights (CORR function moved from KPI formulas to insights pipeline)
+    try:
+        correlation_insights = detect_correlation_insights(all_dfs, schema, threshold=0.7)
+        if correlation_insights:
+            dashboard["insights"].extend(correlation_insights)
+            logger.info(f"Added {len(correlation_insights)} correlation insights")
+    except Exception:
+        logger.exception("Failed to generate correlation insights, continuing without them")
 
     return dashboard

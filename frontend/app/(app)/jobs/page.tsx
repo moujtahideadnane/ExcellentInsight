@@ -29,6 +29,8 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string;
   parsing:    { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'PARSING' },
 }
 
+const DEFAULT_STATUS = { color: '#888888', bg: '#111111', border: '#333333', label: 'STATUS_UNKNOWN' }
+
 function formatBytes(bytes?: number): string | null {
   if (!bytes) return null
   if (bytes < 1024) return `${bytes} B`
@@ -123,7 +125,7 @@ export default function JobsPage() {
       {!isLoading && !error && jobs.length > 0 && (
         <div className="grid grid-cols-1 gap-3">
           {jobs.map((job, i) => {
-            const sc = STATUS_CONFIG[job.status] || STATUS_CONFIG['pending']!
+            const sc = STATUS_CONFIG[job.status] || STATUS_CONFIG['pending'] || DEFAULT_STATUS
             const isClickable = job.status === 'completed' || job.status === 'done'
             const displayName = job.file_name || `${job.id.slice(0, 12)}`
             const sizeStr = formatBytes(job.file_size_bytes)

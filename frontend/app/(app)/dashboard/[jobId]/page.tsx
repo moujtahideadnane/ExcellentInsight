@@ -9,10 +9,10 @@ import KPIGrid from '@/components/dashboard/KPIGrid'
 import InsightView from '@/components/dashboard/InsightView'
 import DataPreview from '@/components/dashboard/DataPreview'
 import DomainHeader from '@/components/dashboard/DomainHeader'
+import ExportDropdown from '@/components/dashboard/ExportDropdown'
+import ShareButton from '@/components/dashboard/ShareButton'
 import {
   BarChart3,
-  Download,
-  Share2,
   Calendar,
   FileText,
   ArrowLeft,
@@ -109,6 +109,18 @@ export default function DashboardDetailPage() {
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
       toast.error(axiosErr.response?.data?.detail || "Failed to update metric")
+    }
+  }
+
+  const handleDeleteKPI = async (index: number) => {
+    try {
+      const response = await api.delete(`/dashboard/${jobId}/kpis/${index}`)
+      setData(response.data)
+      toast.success("KPI deleted successfully")
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } }
+      toast.error(axiosErr.response?.data?.detail || "Failed to delete KPI")
+      throw err // Re-throw so the component can handle the error state
     }
   }
 
@@ -214,24 +226,8 @@ export default function DashboardDetailPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href)
-                  toast.success('Link copied to clipboard')
-                }}
-                className="flex items-center justify-center h-8 w-8 rounded-[4px] border border-[#333333] hover:bg-[#111111] transition-colors text-[#888888] hover:text-[#EDEDED]"
-                title="Copy link"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="flex items-center gap-2 h-8 px-3 rounded-[4px] bg-[#EDEDED] text-[#000000] text-[11px] font-medium hover:bg-[#CCCCCC] transition-colors"
-                title="Print report"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export
-              </button>
+              <ShareButton jobId={jobId as string} />
+              <ExportDropdown jobId={jobId as string} />
             </div>
           </div>
         </motion.header>
@@ -251,7 +247,7 @@ export default function DashboardDetailPage() {
             <h2 className="text-[10px] font-mono uppercase tracking-widest text-[#888888] whitespace-nowrap">Node Outputs</h2>
             <div className="flex-1 h-px bg-[#333333]" />
           </div>
-          <KPIGrid kpis={data.kpis || []} onUpdateKPI={handleUpdateKPI} />
+          <KPIGrid kpis={data.kpis || []} onUpdateKPI={handleUpdateKPI} onDeleteKPI={handleDeleteKPI} />
         </section>
 
         {/* ── Visualizations ───────────────────────────── */}

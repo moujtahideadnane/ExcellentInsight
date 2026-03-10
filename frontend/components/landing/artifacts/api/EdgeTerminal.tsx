@@ -5,55 +5,63 @@ import { motion, useInView, useAnimation } from 'framer-motion'
 import { Terminal, Copy } from 'lucide-react'
 
 const queries = {
-  default: `fetch('https://api.excellentinsight.com/v1/query', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer ex_...',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    datasetId: 'ds_8f92a1',
-    metric: 'revenue_sum',
-    groupBy: ['region'],
-    limit: 10
-  })
-});`,
-  adjusted: `fetch('https://api.excellentinsight.com/v1/query', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer ex_...',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    datasetId: 'ds_8f92a1',
-    metric: 'retention_rate', // Changed indicator
-    groupBy: ['cohort_month'], // Changed grouping
-    limit: 50
-  })
-});`
+  default: `❯ Processing: sales_report_Q4.xlsx
+
+Extraction Phase:
+- Identifying sheets and headers
+- Mapping data types (Date, Currency)
+- Calculating statistical distributions
+
+Discovery Phase:
+- Detecting Revenue and Margin patterns
+- Identifying top performing categories
+- Computing Year-over-Year growth`,
+  adjusted: `❯ Processing: inventory_log.csv
+
+Extraction Phase:
+- Normalizing product SKUs
+- Detecting warehouse locations
+- Validating stock quantities
+
+Discovery Phase:
+- Identifying low-stock anomalies
+- Mapping geographic distribution
+- Calculating turnover velocity`
 }
 
 const responses = {
-  default: `{
-  "status": 200,
-  "executionTime": "18.4ms",
-  "data": [
-    { "region": "NA", "revenue_sum": 452000 },
-    { "region": "EU", "revenue_sum": 310500 },
-    { "region": "APAC", "revenue_sum": 198000 }
-  ],
-  "meta": { "cached": false }
-}`,
-  adjusted: `{
-  "status": 200,
-  "executionTime": "22.1ms",
-  "data": [
-    { "cohort": "2026-01", "rate": 0.94 },
-    { "cohort": "2026-02", "rate": 0.96 },
-    { "cohort": "2026-03", "rate": 0.92 }
-  ],
-  "meta": { "cached": false }
-}`
+  default: `✨ Discovery Complete
+
+Dashboard Configuration Generated:
+
+1. KPI: Total Revenue
+   → Target: 'Total Amount' in 'Sales'
+   → Logic: SUM(Revenue)
+
+2. KPI: Avg Margin
+   → Target: 'Profit' / 'Revenue'
+   → Logic: AVG(Profit_Margin)
+
+3. Chart: Monthly Sales Growth
+   → View: Bar Chart (Time-Series)
+
+🚀 Pipeline completed in 1.8s`,
+  adjusted: `✨ Discovery Complete
+
+Dashboard Configuration Generated:
+
+1. KPI: Stock Turnover
+   → Target: 'Quantity' vs 'Date'
+   → Evolution: +14.2%
+
+2. KPI: Low Stock Alert
+   → Threshold: < 50 units
+   → Count: 12 SKUs flagged
+
+3. Chart: Warehouse Distribution
+   → View: Pie Chart (Categorical)
+
+🚀 Pipeline completed in 2.1s`
 }
 
 export function EdgeTerminal() {
@@ -94,10 +102,10 @@ export function EdgeTerminal() {
       className="py-32 px-6 md:px-12 max-w-7xl mx-auto border-t border-[#222222] relative"
     >
       <div className="mb-16 max-w-2xl">
-        <div className="text-[10px] font-mono text-[#888888] py-1 px-2 border border-[#333333] rounded-[4px] w-fit mb-4">ARTIFACT III : API</div>
-        <h2 className="text-[32px] md:text-[48px] font-bold tracking-tight mb-4">Global Network Execution.</h2>
+        <div className="text-[10px] font-mono text-[#888888] py-1 px-2 border border-[#333333] rounded-[4px] w-fit mb-4">FEATURE III : AUTO-DISCOVERY</div>
+        <h2 className="text-[32px] md:text-[48px] font-bold tracking-tight mb-4">Automated Data Discovery.</h2>
         <p className="text-[#888888] text-[16px] leading-relaxed">
-          The entire application is deployed at the Vercel Edge. Interrogate your datasets globally with multi-region latency under 50ms. Edit the query below to trigger a live execution.
+          Upload your data and let our engine do the heavy lifting. We automatically identify key performance indicators, detect hidden patterns, and generate optimized visualizations in one click.
         </p>
       </div>
 
@@ -114,20 +122,20 @@ export function EdgeTerminal() {
 
         {/* Request Pane */}
         <div className="bg-[#0A0A0A] p-6 lg:p-8 flex flex-col gap-4">
-          <div className="flex items-center justify-between text-[#888888] text-sm font-mono border-b border-[#222222] pb-4">
-            <span className="flex items-center gap-2"><Terminal className="h-4 w-4" /> Edge Request</span>
+          <div className="items-center justify-between text-[#888888] text-sm font-mono border-b border-[#222222] pb-4 hidden lg:flex">
+            <span className="flex items-center gap-2"><Terminal className="h-4 w-4" /> Processing Pipeline</span>
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={() => triggerRequest(false)}
                 className={`px-3 py-1 text-[10px] rounded-[4px] transition-colors border ${!isAdjusted ? 'bg-[#222222] border-[#444444] text-white' : 'bg-transparent border-[#222222] text-[#888888] hover:text-white'}`}
               >
-                Query A
+                Sales Data
               </button>
-              <button 
+              <button
                 onClick={() => triggerRequest(true)}
                 className={`px-3 py-1 text-[10px] rounded-[4px] transition-colors border ${isAdjusted ? 'bg-[#222222] border-[#444444] text-white' : 'bg-transparent border-[#222222] text-[#888888] hover:text-white'}`}
               >
-                Query B
+                Inventory
               </button>
             </div>
           </div>
@@ -145,25 +153,25 @@ export function EdgeTerminal() {
 
         {/* Response Pane */}
         <div className="bg-[#000000] p-6 lg:p-8 flex flex-col gap-4">
-          <div className="flex items-center justify-between text-[#888888] text-sm font-mono border-b border-[#222222] pb-4">
-            <span className="flex items-center gap-2">Response</span>
+          <div className="items-center justify-between text-[#888888] text-sm font-mono border-b border-[#222222] pb-4 hidden lg:flex">
+            <span className="flex items-center gap-2">System Output</span>
              {isFetching ? (
-               <div className="text-[10px] text-[#F5A623] animate-pulse">EXECUTING...</div>
+                <div className="text-[10px] text-[#F5A623] animate-pulse">SYSTEM THINKING...</div>
              ) : (
                <Copy className="h-4 w-4 cursor-pointer hover:text-white transition-colors" />
              )}
           </div>
           <pre className="text-[#888888] text-[12px] font-mono whitespace-pre-wrap leading-loose relative">
-            {/* The actual JSON */}
+            {/* The actual response */}
             <motion.div
               key={responseStr}
               initial={{ opacity: 0, filter: 'blur(4px)' }}
               animate={{ opacity: 1, filter: 'blur(0px)' }}
               transition={{ duration: 0.4 }}
-              className="text-[#00E5FF]"
+              className="text-[#EDEDED]"
             >
               {responseStr.split('\n').map((line, i) => (
-                <div key={i} className={line.includes('status') || line.includes('executionTime') ? 'text-[#EDEDED]' : ''}>
+                <div key={i} className={line.includes('✨') ? 'text-[#00E5FF]' : line.includes('🚀') || line.includes('⚠️') ? 'text-[#F5A623]' : ''}>
                   {line}
                 </div>
               ))}

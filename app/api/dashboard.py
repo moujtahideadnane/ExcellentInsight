@@ -7,6 +7,7 @@ import polars as pl
 import redis.asyncio as redis
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +24,7 @@ from app.schemas.errors import (
     RESPONSES_409,
     RESPONSES_500,
 )
+from app.utils.export import export_dashboard_excel, export_dashboard_pdf
 
 settings = get_settings()
 logger = structlog.get_logger()
@@ -150,6 +152,76 @@ async def update_kpi_formula(
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Re-calculation failed: {str(e)}")
+
+
+@router.delete(
+    "/{job_id}/kpis/{kpi_index}",
+    response_model=DashboardResponse,
+    responses={**RESPONSES_400, **RESPONSES_401, **RESPONSES_404},
+)
+async def delete_kpi(
+    job_id: uuid.UUID,
+    kpi_index: int,
+    current_org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_rls_db),
+):
+    """Delete a specific KPI from the dashboard."""
+    job = await get_job_for_tenant(db, job_id, current_org_id)
+
+    dashboard_config = job.dashboard_config or {}
+    kpis = dashboard_config.get("kpis", [])
+
+    if kpi_index < 0 or kpi_index >= len(kpis):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid KPI index {kpi_index}",
+        )
+
+    deleted_kpi = kpis.pop(kpi_index)
+    dashboard_config["kpis"] = kpis
+
+    llm_result = job.llm_result or {}
+    if "kpis" in llm_result and kpi_index < len(llm_result["kpis"]):
+        llm_result["kpis"].pop(kpi_index)
+
+    await db.execute(
+        update(AnalysisJob)
+        .where(AnalysisJob.id == job_id)
+        .values(dashboard_config=dashboard_config, llm_result=llm_result)
+    )
+    await db.commit()
+
+    logger.info(
+        "kpi_deleted",
+        job_id=str(job_id),
+        kpi_index=kpi_index,
+        kpi_label=deleted_kpi.get("label", "unknown"),
+    )
+
+    llm_usage = None
+    usage = llm_result.get("usage") or {}
+    if usage or (job.llm_tokens_used and job.llm_tokens_used > 0):
+        llm_usage = {
+            "prompt_tokens": usage.get("prompt_tokens"),
+            "completion_tokens": usage.get("completion_tokens"),
+            "total_tokens": usage.get("total_tokens") or job.llm_tokens_used,
+        }
+
+    return DashboardResponse(
+        job_id=job.id,
+        overview=dashboard_config.get("overview", {}),
+        kpis=kpis,
+        charts=dashboard_config.get("charts", []),
+        insights=dashboard_config.get("insights", []),
+        relationships=dashboard_config.get("relationships", []),
+        joins=dashboard_config.get("joins", []),
+        data_preview=dashboard_config.get("data_preview", {}),
+        dataset_profile=dashboard_config.get("dataset_profile"),
+        created_at=job.created_at,
+        processing_time_ms=job.processing_time_ms,
+        schema_summary=job.schema_result,
+        llm_usage=llm_usage,
+    )
 
 
 @router.get(
@@ -436,3 +508,93 @@ async def stop_analysis(
     await db.commit()
 
     return {"message": "Analysis stopping...", "job_id": job_id}
+
+
+@router.get(
+    "/{job_id}/export/pdf",
+    responses={**RESPONSES_401, **RESPONSES_404, **RESPONSES_500},
+)
+async def export_pdf(
+    job_id: uuid.UUID,
+    current_org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_rls_db),
+):
+    """Export dashboard as PDF."""
+    try:
+        job = await get_job_for_tenant(db, job_id, current_org_id)
+
+        if job.status != JobStatus.DONE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Dashboard not ready for export. Job must be completed.",
+            )
+
+        # Build dashboard data structure
+        dashboard_data = orchestrator.assemble_dashboard_response(job)
+
+        # Generate PDF
+        pdf_buffer = export_dashboard_pdf(dashboard_data)
+
+        logger.info("dashboard_pdf_exported", job_id=str(job_id), org_id=str(current_org_id))
+
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=dashboard_{job_id}.pdf"
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("pdf_export_failed", job_id=str(job_id), error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate PDF export",
+        )
+
+
+@router.get(
+    "/{job_id}/export/excel",
+    responses={**RESPONSES_401, **RESPONSES_404, **RESPONSES_500},
+)
+async def export_excel(
+    job_id: uuid.UUID,
+    current_org_id: uuid.UUID = Depends(get_current_org_id),
+    db: AsyncSession = Depends(get_rls_db),
+):
+    """Export dashboard as Excel."""
+    try:
+        job = await get_job_for_tenant(db, job_id, current_org_id)
+
+        if job.status != JobStatus.DONE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Dashboard not ready for export. Job must be completed.",
+            )
+
+        # Build dashboard data structure
+        dashboard_data = orchestrator.assemble_dashboard_response(job)
+
+        # Generate Excel
+        excel_buffer = export_dashboard_excel(dashboard_data)
+
+        logger.info("dashboard_excel_exported", job_id=str(job_id), org_id=str(current_org_id))
+
+        return StreamingResponse(
+            excel_buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename=dashboard_{job_id}.xlsx"
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("excel_export_failed", job_id=str(job_id), error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate Excel export",
+        )

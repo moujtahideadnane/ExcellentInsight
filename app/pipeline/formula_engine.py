@@ -209,4 +209,23 @@ def apply_formula(df: pl.DataFrame, formula: str, target_col: str) -> pl.DataFra
 
             return df.with_columns([pl.when(expr).then(1.0).otherwise(0.0).alias(target_col)])
 
+    # 8. MODE(col) -> Most frequent value (for categorical analysis)
+    mode_match = re.search(r"MODE\s*\(\s*([\w\.-]+)\s*\)", formula, re.IGNORECASE)
+    if mode_match:
+        c_raw = mode_match.group(1)
+        col = get_real_col(c_raw)
+        if col:
+            # Return the column itself; MODE aggregation happens in dashboard_builder
+            return df.with_columns(pl.col(col).alias(target_col))
+
+    # 9. COALESCE(col1, col2, ...) -> First non-null value
+    # Note: CORR was removed from formula engine - correlations are now detected
+    # automatically as insights in the dashboard_builder pipeline
+    coalesce_match = re.search(r"COALESCE\s*\(\s*([\w\.,\s\.-]+)\s*\)", formula, re.IGNORECASE)
+    if coalesce_match:
+        cols_raw = [c.strip() for c in coalesce_match.group(1).split(",")]
+        real_cols = [get_real_col(c) for c in cols_raw if get_real_col(c)]
+        if real_cols:
+            return df.with_columns(pl.coalesce([pl.col(c) for c in real_cols]).alias(target_col))
+
     return df

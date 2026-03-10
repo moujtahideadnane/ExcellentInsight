@@ -27,6 +27,9 @@ dependencies = [
     "structlog>=24.4",
     "aiofiles>=24.1",
     "httpx>=0.28",
+    "reportlab>=4.0",  # PDF generation
+    "pillow>=10.0",    # Image support for PDFs
+    "xlsxwriter>=3.0", # Professional Excel export
 ]
 
 [tool.setuptools.packages.find]

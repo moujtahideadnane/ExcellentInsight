@@ -9,6 +9,7 @@ from app.llm.openrouter_client import OpenRouterClient
 from app.pipeline.schema_detector import DetectedSchema
 from app.pipeline.stats_engine import FileStats
 from app.utils.columns import get_valid_column
+from app.utils.llm_validation import validate_llm_output
 from app.utils.sanitization import (
     sanitize_for_llm,
     sanitize_sheet_name,
@@ -1032,56 +1033,128 @@ async def enrich_data(
         )
 
     prompt = f"""
-    Analyze the following Excel file structure, statistics and relationships to provide business insights.
+You are analyzing an Excel dataset to generate a comprehensive business dashboard. Your task is to suggest KPIs, charts, and joins that provide actionable insights.
 
-    ALLOWED COLUMNS — copy these exact strings; do not invent or paraphrase.
-    Any column name or sheet name not in the list below will cause the system to reject the KPI or chart.
-    Do not use synonyms, abbreviations, or variations. Use ONLY the exact names as they appear.
+Follow these steps in order:
 
-    {allowed_columns_json}
+STEP 1: ANALYZE THE DATA STRUCTURE
+- Review the SCHEMA section to understand sheets and columns
+- Review the RELATIONSHIPS section to understand connections between sheets
+- Review the COLUMN STATISTICS section to understand data distribution and values
+- Identify key dimensions (categorical columns with few unique values)
+- Identify key measures (numeric columns with aggregatable values)
+- Identify temporal columns (dates or year columns)
 
-    DATASET PROFILE:
-    - total_rows: {dataset_profile.total_rows}
-    - total_columns: {dataset_profile.total_columns}
-    - has_dates: {dataset_profile.has_dates}
-    - has_amounts: {dataset_profile.has_amounts}
-    - candidate_table_types: {dataset_profile.candidate_table_types}
+STEP 2: PLAN YOUR RECOMMENDATIONS
+- What domain does this data represent? (Sales, Finance, Operations, etc.)
+- What are the 4-6 most important business questions this data can answer?
+- What joins are needed to connect related sheets?
+- What KPIs will answer these business questions?
+- What charts will visualize these patterns effectively?
 
-    ACTIVE SUB-PIPELINES (hints about the business domain):
-    - {", ".join(subpipeline_types) if subpipeline_types else "none (generic analysis)"}
+STEP 3: VALIDATE YOUR RECOMMENDATIONS
+Before suggesting anything, verify:
+✓ Every sheet name exists in ALLOWED COLUMNS
+✓ Every column exists in ALLOWED COLUMNS for that sheet
+✓ Every function is in ALLOWED FUNCTIONS
+✓ Every aggregation is in ALLOWED AGGREGATIONS
+✓ Numeric columns have mean/min/max in COLUMN STATISTICS
+✓ Categorical columns for split_by have ≤15 unique values
+✓ You're not using ID columns (unique_count ≈ total rows) with SUM/AVG
 
-    STRUCTURE:
-    {chr(10).join(schema_summary)}
+STEP 4: PROVIDE YOUR FINAL RECOMMENDATIONS
+Format your response as valid JSON with all required fields.
 
-    DETECTED RELATIONSHIPS:
-    {chr(10).join(rel_summary) if rel_summary else "No relationships detected."}
+=== STRICT RULES ===
+1. **ONLY use column and sheet names from the ALLOWED COLUMNS list below**
+2. **ONLY use functions from the ALLOWED FUNCTIONS list below**
+3. **ONLY use aggregations from the ALLOWED AGGREGATIONS list below**
+4. **Verify every column exists in COLUMN STATISTICS before using it**
 
-    COLUMN STATISTICS (use these to choose sensible formulas):
-    {chr(10).join(stats_lines) if stats_lines else "No stats available."}
+=== ALLOWED COLUMNS (COPY EXACTLY, NO VARIATIONS) ===
+{allowed_columns_json}
 
-    Respond STRICTLY in JSON with this format. In kpis and charts use ONLY column and sheet names from ALLOWED COLUMNS above.
-    {{
-      "domain": "e.g., Sales, HR, Finance",
-      "summary": "Short 2-sentence overview of the data",
-      "joins": [],
-      "kpis": [
-        {example_kpi or '{"label": "Example KPI", "formula": "SUM(<column_from_allowed_list>)", "sheet": "<sheet_from_allowed_list>", "aggregation": "sum", "format": "number", "unit": "", "priority": "medium", "description": "Business description."}'}
-      ],
-      "insights": [
-        {{"text": "Short insight about the data", "severity": "medium", "type": "kpi", "title": "Insight Title"}}
-      ],
-      "charts": [
-        {example_chart or '{"type": "bar", "title": "Example Chart", "description": "Description", "sheet": "<sheet_from_allowed_list>", "x_axis": "<column_from_allowed_list>", "y_axis": "<column_from_allowed_list>", "aggregation": "sum", "format": "number", "unit": ""}'}
-      ]
-    }}
+=== ALLOWED FUNCTIONS ===
+Arithmetic: SUM, AVG, COUNT, COUNTIF, MIN, MAX
+Statistical: MEDIAN, STDEV, VAR, PERCENTILE, MODE
+Date: DATEDIFF, IS_BEFORE
+Comparison: LT, GT
+Math: RATIO, DIFF
+Conditional: COALESCE
+Note: CORR exists but is for insights only, not KPI formulas. For range analysis, use separate MIN and MAX KPIs.
+Note: ABS, ROUND, FLOOR, CEIL, IF, CONCAT, LENGTH, IS_AFTER, LTE, GTE, EQ, NEQ, QUARTILE, RANGE are not implemented in the formula engine
 
-    To get a chart with a legend, add "split_by": "<ColumnName>" (use an actual categorical column from ALLOWED COLUMNS, e.g. Region, Status, Category).
-    If you do NOT want a legend, OMIT the split_by field entirely (do not use "none"/"null"/empty strings).
+=== ALLOWED AGGREGATIONS ===
+sum, avg, count, min, max, median, stddev, stdev, var, mode, percentile
 
-    The examples above use this file's actual column names. Your kpis and charts MUST use the same ALLOWED COLUMNS names only.
+=== DATASET PROFILE ===
+- Total Rows: {dataset_profile.total_rows}
+- Total Columns: {dataset_profile.total_columns}
+- Has Dates: {dataset_profile.has_dates}
+- Has Amounts: {dataset_profile.has_amounts}
+- Table Types: {dataset_profile.candidate_table_types}
+- Domain: {", ".join(subpipeline_types) if subpipeline_types else "generic"}
 
-    IMPORTANT:
-    - See LEGENDS (split_by) below: at least 2–3 charts must use split_by for multi-series and legends.
+=== SCHEMA ===
+{chr(10).join(schema_summary)}
+
+=== RELATIONSHIPS ===
+{chr(10).join(rel_summary) if rel_summary else "No relationships detected."}
+
+=== COLUMN STATISTICS ===
+Use these to understand data ranges and make informed choices:
+{chr(10).join(stats_lines) if stats_lines else "No stats available."}
+
+=== RESPONSE FORMAT ===
+Respond STRICTLY in valid JSON matching this structure:
+
+{{
+  "reasoning": "STEP 1 ANALYSIS: I identified [X sheets] with [Y relationships]. Key dimensions: [categorical columns]. Key measures: [numeric columns]. Temporal columns: [date/year columns].
+
+  STEP 2 PLANNING: Domain is [domain]. Business questions: 1) [question], 2) [question], etc. Needed joins: [joins]. Proposed KPIs: [kpis]. Proposed charts: [charts].
+
+  STEP 3 VALIDATION: ✓ All sheets exist in ALLOWED COLUMNS. ✓ All columns verified in COLUMN STATISTICS. ✓ All functions from ALLOWED FUNCTIONS. ✓ No ID columns used with SUM/AVG. ✓ split_by columns have ≤15 unique values.",
+
+  "domain": "e.g., Sales, HR, Finance, Operations",
+
+  "summary": "2-sentence business summary of the dataset",
+
+  "joins": [
+    {{"left_sheet": "<exact_name>", "right_sheet": "<exact_name>", "on": "<exact_column_name>", "how": "inner"}}
+  ],
+
+  "kpis": [
+    {example_kpi or '{"label": "Total Revenue", "formula": "SUM(Revenue)", "sheet": "Sales", "aggregation": "sum", "format": "currency", "unit": "$", "priority": "high", "description": "Total revenue across all transactions"}'}
+  ],
+
+  "insights": [
+    {{"text": "Actionable insight based on data", "severity": "medium", "type": "kpi", "title": "Brief Title"}}
+  ],
+
+  "charts": [
+    {example_chart or '{"type": "bar", "title": "Revenue by Region", "description": "Breakdown of revenue", "sheet": "Sales", "x_axis": "Region", "y_axis": "Revenue", "aggregation": "sum", "format": "currency", "unit": "$"}'}
+  ]
+}}
+
+=== CRITICAL VALIDATION CHECKS (Your output will be validated) ===
+Before suggesting any KPI or chart, verify:
+1. ✓ Sheet name exists in ALLOWED COLUMNS
+2. ✓ Every column in formula exists in that sheet's ALLOWED COLUMNS
+3. ✓ Every function is in ALLOWED FUNCTIONS
+4. ✓ Aggregation is in ALLOWED AGGREGATIONS
+5. ✓ Column has data (check COLUMN STATISTICS unique_count > 0)
+6. ✓ For SUM/AVG: column has numeric values (check mean/min/max in stats)
+7. ✓ For ID columns (unique_count ≈ total rows): use COUNT, not SUM/AVG
+8. ✓ split_by column has ≤15 distinct values (check unique_count in stats)
+
+=== CHAIN-OF-THOUGHT REASONING ===
+Include a "reasoning" field explaining:
+- What patterns you identified in the schema
+- Which columns you chose and why (reference COLUMN STATISTICS)
+- Why each KPI provides business value
+- How charts complement each other
+
+This helps validate your suggestions are based on actual data, not hallucinations.
 
     IMPORTANT:
     - If you need data from multiple sheets for a KPI or Chart, first specify the "joins" required.
@@ -1197,6 +1270,29 @@ async def enrich_data(
         return result
 
     data = response.parsed_json
+
+    # Advanced validation layer to catch hallucinations
+    try:
+        data, validation_errors = validate_llm_output(data, schema, stats_by_sheet=stats_by_sheet)
+        if validation_errors:
+            critical_errors = [e for e in validation_errors if e.severity == "critical"]
+            high_errors = [e for e in validation_errors if e.severity == "high"]
+            logger.warning(
+                "LLM output had validation issues",
+                critical_count=len(critical_errors),
+                high_count=len(high_errors),
+                total_errors=len(validation_errors),
+            )
+            # Log sample of critical errors for debugging
+            for error in critical_errors[:3]:
+                logger.warning(
+                    "Critical validation error",
+                    type=error.hallucination_type,
+                    message=error.message,
+                    field=error.field,
+                )
+    except Exception:
+        logger.exception("Advanced validation failed, falling back to basic validation")
 
     # Validate and filter LLM response (pass stats for cardinality guard)
     data = validate_and_filter_llm_response(data, schema, stats_by_sheet=stats_by_sheet)

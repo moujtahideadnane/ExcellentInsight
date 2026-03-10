@@ -455,14 +455,6 @@ async def recalculate_kpi(job_id: str, kpi_index: int, new_formula: str) -> dict
 
         # Deserialize objects
         enrichment = LLMEnrichment.model_validate(llm_result)
-        # Ensure any KPIs/charts referencing joined sheet names have join recommendations
-        try:
-            from app.pipeline.llm_enricher import auto_inject_joins
-
-            enrichment = auto_inject_joins(enrichment, context.schema)
-        except Exception:
-            logger.exception("auto_inject_joins failed during recalculate_kpi; continuing")
-
         context.enrichment = enrichment
 
         schema_dict = job.schema_result or {}
@@ -474,6 +466,14 @@ async def recalculate_kpi(job_id: str, kpi_index: int, new_formula: str) -> dict
             sheets.append(SheetSchema(name=s["name"], columns=cols, row_count=s["row_count"]))
         rels = [Relationship(**r) for r in schema_dict.get("relationships", [])]
         context.schema = DetectedSchema(sheets=sheets, relationships=rels)
+
+        # Ensure any KPIs/charts referencing joined sheet names have join recommendations
+        try:
+            from app.pipeline.llm_enricher import auto_inject_joins
+
+            context.enrichment = auto_inject_joins(context.enrichment, context.schema)
+        except Exception:
+            logger.exception("auto_inject_joins failed during recalculate_kpi; continuing")
 
         sheet_stats = []
         stats_list = stats_dict.get("sheets", []) if isinstance(stats_dict, dict) else stats_dict
@@ -501,3 +501,17 @@ async def recalculate_kpi(job_id: str, kpi_index: int, new_formula: str) -> dict
 
         # 5. Return updated dashboard
         return context.dashboard
+
+
+def assemble_dashboard_response(job: AnalysisJob) -> dict:
+    """Transform an AnalysisJob model into a dictionary suitable for export."""
+    config = job.dashboard_config or {}
+    return {
+        "overview": config.get("overview", {}),
+        "created_at": job.created_at.isoformat() if job.created_at else None,
+        "kpis": config.get("kpis", []),
+        "insights": config.get("insights", []),
+        "charts": config.get("charts", []),
+        "joins": config.get("joins", []),
+        "dataset_profile": config.get("dataset_profile"),
+    }
