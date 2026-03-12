@@ -1,0 +1,11 @@
+# robots.txt for ExcellentInsight
+# https://excellentinsight.onthewifi.com/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /settings/
+
+# Sitemaps
+Sitemap: https://excellentinsight.onthewifi.com/sitemap.xml

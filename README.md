@@ -1,5 +1,11 @@
 # ExcellentInsight - AI-Powered Excel & CSV Analysis Tool
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://excellentinsight.onthewifi.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![React 19](https://img.shields.io/badge/React-19-blue)](https://react.dev/)
+
 <div align="center">
   <img src="/home/moadnane/.gemini/antigravity/brain/9de31ee5-3853-4e06-930e-f9e63c897720/excellent_insight_dashboard_hero_1772876158355.png" alt="ExcellentInsight AI Dashboard - Transform Excel and CSV files into interactive dashboards with automatic KPI detection" width="800">
 
@@ -8,10 +14,11 @@
   <p>Transform any Excel (.xlsx, .xls) or CSV file into a comprehensive AI-powered dashboard with automatic KPI detection in under 60 seconds. Zero configuration, instant business intelligence insights powered by OpenRouter AI.</p>
 
   <p>
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
-    <img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+">
-    <img src="https://img.shields.io/badge/Next.js-15-black" alt="Next.js 15">
-    <img src="https://img.shields.io/badge/React-19-blue" alt="React 19">
+    <a href="https://excellentinsight.onthewifi.com">🌐 Live Demo</a> •
+    <a href="#-quick-start">🚀 Quick Start</a> •
+    <a href="docs/API.md">📖 API Docs</a> •
+    <a href="#-contributing">🤝 Contributing</a> •
+    <a href="https://github.com/moadnane/ExcellentInsight/issues">🐛 Report Bug</a>
   </p>
 </div>
 
