@@ -80,6 +80,7 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_URL: https://excellentinsight.onthewifi.com//api/v1
+    ports:
       - "3000:3000"
     env_file:
       - ./frontend/.env.local  # Create from .env.local.example
