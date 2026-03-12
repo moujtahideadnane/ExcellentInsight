@@ -350,10 +350,10 @@ export default function LandingClient() {
             ExcellentInsight © 2026
          </div>
          <div className="flex items-center gap-6 font-medium">
-            <a href="https://github.com/moadnane/ExcellentInsight" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
-            <a href="https://github.com/moadnane/ExcellentInsight/blob/main/docs/API.md" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">API Docs</a>
-            <a href="https://github.com/moadnane/ExcellentInsight/blob/main/docs/FEATURES.md" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Features</a>
-            <a href="https://github.com/moadnane/ExcellentInsight/issues" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Support</a>
+            <a href="https://github.com/moujtahideadnane/ExcellentInsight" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
+            <a href="https://github.com/moujtahideadnane/ExcellentInsight/blob/main/docs/API.md" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">API Docs</a>
+            <a href="https://github.com/moujtahideadnane/ExcellentInsight/blob/main/docs/FEATURES.md" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Features</a>
+            <a href="https://github.com/moujtahideadnane/ExcellentInsight/issues" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Support</a>
          </div>
       </footer>
     </div>
