@@ -176,9 +176,7 @@ async def revoke_share(
 ):
     """Revoke (deactivate) a share link."""
     result = await db.execute(
-        select(DashboardShare)
-        .where(DashboardShare.id == share_id)
-        .where(DashboardShare.org_id == current_org_id)
+        select(DashboardShare).where(DashboardShare.id == share_id).where(DashboardShare.org_id == current_org_id)
     )
     share = result.scalar_one_or_none()
 
@@ -189,11 +187,7 @@ async def revoke_share(
         )
 
     # Deactivate the share
-    await db.execute(
-        update(DashboardShare)
-        .where(DashboardShare.id == share_id)
-        .values(is_active=False)
-    )
+    await db.execute(update(DashboardShare).where(DashboardShare.id == share_id).values(is_active=False))
     await db.commit()
 
     logger.info("dashboard_share_revoked", share_id=str(share_id), org_id=str(current_org_id))

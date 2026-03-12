@@ -105,33 +105,37 @@ class DashboardPDFExporter:
                     unit = kpi.get("unit", "")
                     value_str = f"{value} {unit}".strip() if value != "N/A" else "N/A"
 
-                    kpi_table_data.append([
-                        kpi.get("label", "Unnamed"),
-                        value_str,
-                        kpi.get("priority", "low").upper(),
-                        kpi.get("formula", "N/A"),
-                    ])
+                    kpi_table_data.append(
+                        [
+                            kpi.get("label", "Unnamed"),
+                            value_str,
+                            kpi.get("priority", "low").upper(),
+                            kpi.get("formula", "N/A"),
+                        ]
+                    )
 
                 kpi_table = Table(kpi_table_data, colWidths=[2.5 * inch, 1.5 * inch, 1 * inch, 3 * inch])
                 kpi_table.setStyle(
-                    TableStyle([
-                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
-                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#EDEDED")),
-                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                        ("FONTSIZE", (0, 0), (-1, 0), 10),
-                        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                        ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#111111")),
-                        ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#EDEDED")),
-                        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                        ("FONTSIZE", (0, 1), (-1, -1), 9),
-                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#333333")),
-                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                        ("TOPPADDING", (0, 1), (-1, -1), 8),
-                        ("BOTTOMPADDING", (0, 1), (-1, -1), 8),
-                    ])
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#333333")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#EDEDED")),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#111111")),
+                            ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#EDEDED")),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 9),
+                            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#333333")),
+                            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                            ("TOPPADDING", (0, 1), (-1, -1), 8),
+                            ("BOTTOMPADDING", (0, 1), (-1, -1), 8),
+                        ]
+                    )
                 )
                 story.append(kpi_table)
                 story.append(Spacer(1, 0.3 * inch))
@@ -187,9 +191,7 @@ class DashboardPDFExporter:
             0.3 * inch,
             f"ExcellentInsight | Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
         )
-        canvas_obj.drawRightString(
-            doc.pagesize[0] - 0.5 * inch, 0.3 * inch, f"Page {doc.page}"
-        )
+        canvas_obj.drawRightString(doc.pagesize[0] - 0.5 * inch, 0.3 * inch, f"Page {doc.page}")
         canvas_obj.restoreState()
 
 
@@ -206,26 +208,32 @@ class DashboardExcelExporter:
             workbook = xlsxwriter.Workbook(self.buffer, {"in_memory": True})
 
             # Define formats
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#333333",
-                "font_color": "#EDEDED",
-                "border": 1,
-                "align": "left",
-                "valign": "vcenter",
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#333333",
+                    "font_color": "#EDEDED",
+                    "border": 1,
+                    "align": "left",
+                    "valign": "vcenter",
+                }
+            )
 
-            cell_format = workbook.add_format({
-                "border": 1,
-                "align": "left",
-                "valign": "vcenter",
-            })
+            cell_format = workbook.add_format(
+                {
+                    "border": 1,
+                    "align": "left",
+                    "valign": "vcenter",
+                }
+            )
 
-            title_format = workbook.add_format({
-                "bold": True,
-                "font_size": 16,
-                "font_color": "#000000",
-            })
+            title_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "font_size": 16,
+                    "font_color": "#000000",
+                }
+            )
 
             # Overview Sheet
             overview_sheet = workbook.add_worksheet("Overview")

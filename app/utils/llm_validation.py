@@ -16,6 +16,7 @@ logger = structlog.get_logger()
 
 # === Hallucination Type Definitions ===
 
+
 class HallucinationType:
     """Types of hallucinations the LLM can produce in dashboard generation."""
 
@@ -56,32 +57,35 @@ class HallucinationType:
 
 ALLOWED_FUNCTIONS = {
     # Arithmetic
-    "SUM", "AVG", "COUNT", "COUNTIF", "MIN", "MAX",
-
+    "SUM",
+    "AVG",
+    "COUNT",
+    "COUNTIF",
+    "MIN",
+    "MAX",
     # Statistical
-    "MEDIAN", "STDEV", "VAR", "PERCENTILE", "MODE",
-
+    "MEDIAN",
+    "STDEV",
+    "VAR",
+    "PERCENTILE",
+    "MODE",
     # Date functions
-    "DATEDIFF", "IS_BEFORE",
-
+    "DATEDIFF",
+    "IS_BEFORE",
     # Comparison
-    "LT", "GT",
-
+    "LT",
+    "GT",
     # Mathematical
-    "RATIO", "DIFF",
-
+    "RATIO",
+    "DIFF",
     # Conditional
     "COALESCE",
-
     # Note: CORR is implemented but should only be used in insights pipeline, not KPIs
     # Note: Not yet implemented in formula_engine.py:
     # ABS, ROUND, FLOOR, CEIL, IF, CONCAT, LENGTH, IS_AFTER, LTE, GTE, EQ, NEQ, QUARTILE, RANGE
 }
 
-ALLOWED_AGGREGATIONS = {
-    "sum", "avg", "count", "min", "max", "median",
-    "stddev", "stdev", "var", "mode", "percentile"
-}
+ALLOWED_AGGREGATIONS = {"sum", "avg", "count", "min", "max", "median", "stddev", "stdev", "var", "mode", "percentile"}
 
 VALID_CHART_TYPES = {"bar", "line", "area", "pie"}
 
@@ -93,6 +97,7 @@ VALID_SEVERITIES = {"high", "medium", "low", "info", "warning"}
 
 
 # === Validation Error Class ===
+
 
 class ValidationError:
     """Represents a single validation error."""
@@ -123,6 +128,7 @@ class ValidationError:
 
 # === Core Validation Functions ===
 
+
 def validate_schema_references(
     data: Dict[str, Any],
     schema: DetectedSchema,
@@ -138,9 +144,7 @@ def validate_schema_references(
 
     # Build lookup structures
     all_sheets = {s.name for s in schema.sheets}
-    sheet_columns: Dict[str, Set[str]] = {
-        s.name: {c.name for c in s.columns} for s in schema.sheets
-    }
+    sheet_columns: Dict[str, Set[str]] = {s.name: {c.name for c in s.columns} for s in schema.sheets}
     # All columns across all sheets for fuzzy matching
     all_columns = set()
     for cols in sheet_columns.values():
@@ -154,13 +158,15 @@ def validate_schema_references(
 
         # Check sheet exists
         if not _is_valid_sheet_reference(sheet, all_sheets):
-            errors.append(ValidationError(
-                HallucinationType.NONEXISTENT_SHEET,
-                "critical",
-                f"KPI '{label}' references non-existent sheet '{sheet}'",
-                field=f"kpis.{label}.sheet",
-                suggested_fix=_suggest_sheet_name(sheet, all_sheets),
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.NONEXISTENT_SHEET,
+                    "critical",
+                    f"KPI '{label}' references non-existent sheet '{sheet}'",
+                    field=f"kpis.{label}.sheet",
+                    suggested_fix=_suggest_sheet_name(sheet, all_sheets),
+                )
+            )
             continue
 
         # Extract column references from formula
@@ -172,32 +178,38 @@ def validate_schema_references(
                 # Check if column exists in another sheet
                 other_sheet = _find_sheet_with_column(col_ref, sheet_columns)
                 if other_sheet:
-                    errors.append(ValidationError(
-                        HallucinationType.WRONG_SHEET_FOR_COLUMN,
-                        "critical",
-                        f"KPI '{label}' formula references column '{col_ref}' which exists in sheet '{other_sheet}', not '{sheet}'",
-                        field=f"kpis.{label}.formula",
-                        suggested_fix=f"Use sheet '{other_sheet}' or create a join",
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.WRONG_SHEET_FOR_COLUMN,
+                            "critical",
+                            f"KPI '{label}' formula references column '{col_ref}' which exists in sheet '{other_sheet}', not '{sheet}'",
+                            field=f"kpis.{label}.formula",
+                            suggested_fix=f"Use sheet '{other_sheet}' or create a join",
+                        )
+                    )
                 else:
-                    errors.append(ValidationError(
-                        HallucinationType.NONEXISTENT_COLUMN,
-                        "critical",
-                        f"KPI '{label}' formula references non-existent column '{col_ref}'",
-                        field=f"kpis.{label}.formula",
-                        suggested_fix=_suggest_column_name(col_ref, all_columns),
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.NONEXISTENT_COLUMN,
+                            "critical",
+                            f"KPI '{label}' formula references non-existent column '{col_ref}'",
+                            field=f"kpis.{label}.formula",
+                            suggested_fix=_suggest_column_name(col_ref, all_columns),
+                        )
+                    )
 
         # Validate group_by column
         group_by = kpi.get("group_by")
         if group_by and group_by not in available_cols:
-            errors.append(ValidationError(
-                HallucinationType.NONEXISTENT_COLUMN,
-                "high",
-                f"KPI '{label}' group_by references non-existent column '{group_by}'",
-                field=f"kpis.{label}.group_by",
-                suggested_fix=_suggest_column_name(group_by, available_cols),
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.NONEXISTENT_COLUMN,
+                    "high",
+                    f"KPI '{label}' group_by references non-existent column '{group_by}'",
+                    field=f"kpis.{label}.group_by",
+                    suggested_fix=_suggest_column_name(group_by, available_cols),
+                )
+            )
 
     # Validate charts
     for chart in data.get("charts", []):
@@ -209,13 +221,15 @@ def validate_schema_references(
 
         # Check sheet exists
         if not _is_valid_sheet_reference(sheet, all_sheets):
-            errors.append(ValidationError(
-                HallucinationType.NONEXISTENT_SHEET,
-                "critical",
-                f"Chart '{title}' references non-existent sheet '{sheet}'",
-                field=f"charts.{title}.sheet",
-                suggested_fix=_suggest_sheet_name(sheet, all_sheets),
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.NONEXISTENT_SHEET,
+                    "critical",
+                    f"Chart '{title}' references non-existent sheet '{sheet}'",
+                    field=f"charts.{title}.sheet",
+                    suggested_fix=_suggest_sheet_name(sheet, all_sheets),
+                )
+            )
             continue
 
         available_cols = _resolve_sheet_columns(sheet, all_sheets, sheet_columns)
@@ -225,36 +239,42 @@ def validate_schema_references(
             x_cols = _extract_column_references(x_axis)
             for col in x_cols:
                 if col not in available_cols:
-                    errors.append(ValidationError(
-                        HallucinationType.NONEXISTENT_COLUMN,
-                        "critical",
-                        f"Chart '{title}' x_axis references non-existent column '{col}'",
-                        field=f"charts.{title}.x_axis",
-                        suggested_fix=_suggest_column_name(col, available_cols),
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.NONEXISTENT_COLUMN,
+                            "critical",
+                            f"Chart '{title}' x_axis references non-existent column '{col}'",
+                            field=f"charts.{title}.x_axis",
+                            suggested_fix=_suggest_column_name(col, available_cols),
+                        )
+                    )
 
         # Validate y_axis (can be formula or column)
         if y_axis and not _is_formula(y_axis):
             y_cols = _extract_column_references(y_axis)
             for col in y_cols:
                 if col not in available_cols:
-                    errors.append(ValidationError(
-                        HallucinationType.NONEXISTENT_COLUMN,
-                        "critical",
-                        f"Chart '{title}' y_axis references non-existent column '{col}'",
-                        field=f"charts.{title}.y_axis",
-                        suggested_fix=_suggest_column_name(col, available_cols),
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.NONEXISTENT_COLUMN,
+                            "critical",
+                            f"Chart '{title}' y_axis references non-existent column '{col}'",
+                            field=f"charts.{title}.y_axis",
+                            suggested_fix=_suggest_column_name(col, available_cols),
+                        )
+                    )
 
         # Validate split_by
         if split_by and split_by not in available_cols:
-            errors.append(ValidationError(
-                HallucinationType.NONEXISTENT_COLUMN,
-                "high",
-                f"Chart '{title}' split_by references non-existent column '{split_by}'",
-                field=f"charts.{title}.split_by",
-                suggested_fix=_suggest_column_name(split_by, available_cols),
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.NONEXISTENT_COLUMN,
+                    "high",
+                    f"Chart '{title}' split_by references non-existent column '{split_by}'",
+                    field=f"charts.{title}.split_by",
+                    suggested_fix=_suggest_column_name(split_by, available_cols),
+                )
+            )
 
     return errors
 
@@ -287,34 +307,40 @@ def validate_formulas(
         functions = _extract_functions(formula)
         for func in functions:
             if func not in ALLOWED_FUNCTIONS:
-                errors.append(ValidationError(
-                    HallucinationType.INVALID_FUNCTION,
-                    "critical",
-                    f"KPI '{label}' uses disallowed function '{func}'",
-                    field=f"kpis.{label}.formula",
-                    suggested_fix=f"Use one of: {', '.join(sorted(ALLOWED_FUNCTIONS))}",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.INVALID_FUNCTION,
+                        "critical",
+                        f"KPI '{label}' uses disallowed function '{func}'",
+                        field=f"kpis.{label}.formula",
+                        suggested_fix=f"Use one of: {', '.join(sorted(ALLOWED_FUNCTIONS))}",
+                    )
+                )
 
         # Check syntax
         syntax_error = _check_formula_syntax(formula)
         if syntax_error:
-            errors.append(ValidationError(
-                HallucinationType.INVALID_SYNTAX,
-                "critical",
-                f"KPI '{label}' has syntax error: {syntax_error}",
-                field=f"kpis.{label}.formula",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.INVALID_SYNTAX,
+                    "critical",
+                    f"KPI '{label}' has syntax error: {syntax_error}",
+                    field=f"kpis.{label}.formula",
+                )
+            )
 
         # Type checking (basic)
         if sheet in column_types:
             type_error = _check_type_compatibility(formula, column_types[sheet])
             if type_error:
-                errors.append(ValidationError(
-                    HallucinationType.TYPE_MISMATCH,
-                    "high",
-                    f"KPI '{label}' has type error: {type_error}",
-                    field=f"kpis.{label}.formula",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.TYPE_MISMATCH,
+                        "high",
+                        f"KPI '{label}' has type error: {type_error}",
+                        field=f"kpis.{label}.formula",
+                    )
+                )
 
     return errors
 
@@ -359,13 +385,15 @@ def validate_aggregations(
 
         # Check aggregation is valid
         if agg and agg not in ALLOWED_AGGREGATIONS:
-            errors.append(ValidationError(
-                HallucinationType.INVALID_AGGREGATION,
-                "high",
-                f"KPI '{label}' uses invalid aggregation '{agg}'",
-                field=f"kpis.{label}.aggregation",
-                suggested_fix=f"Use one of: {', '.join(sorted(ALLOWED_AGGREGATIONS))}",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.INVALID_AGGREGATION,
+                    "high",
+                    f"KPI '{label}' uses invalid aggregation '{agg}'",
+                    field=f"kpis.{label}.aggregation",
+                    suggested_fix=f"Use one of: {', '.join(sorted(ALLOWED_AGGREGATIONS))}",
+                )
+            )
 
         # Check if aggregating on ID column
         if agg in ("sum", "avg") and sheet in column_info:
@@ -378,13 +406,15 @@ def validate_aggregations(
 
                     # If unique count ≈ row count, likely an ID
                     if unique and total and unique >= 0.9 * total:
-                        errors.append(ValidationError(
-                            HallucinationType.AGGREGATION_ON_ID_COLUMN,
-                            "high",
-                            f"KPI '{label}' applies {agg.upper()} to likely ID column '{col}' (unique={unique}, total={total})",
-                            field=f"kpis.{label}.formula",
-                            suggested_fix="Use COUNT instead, or select a measure column",
-                        ))
+                        errors.append(
+                            ValidationError(
+                                HallucinationType.AGGREGATION_ON_ID_COLUMN,
+                                "high",
+                                f"KPI '{label}' applies {agg.upper()} to likely ID column '{col}' (unique={unique}, total={total})",
+                                field=f"kpis.{label}.formula",
+                                suggested_fix="Use COUNT instead, or select a measure column",
+                            )
+                        )
 
         # Check numeric aggregation on text column
         if agg in ("sum", "avg", "median", "stddev", "var") and sheet in column_info:
@@ -393,13 +423,15 @@ def validate_aggregations(
                 if col in column_info[sheet]:
                     col_type = column_info[sheet][col].get("type", "").lower()
                     if "str" in col_type or "utf" in col_type or "text" in col_type:
-                        errors.append(ValidationError(
-                            HallucinationType.AGGREGATION_ON_TEXT,
-                            "high",
-                            f"KPI '{label}' applies numeric aggregation '{agg}' to text column '{col}'",
-                            field=f"kpis.{label}.formula",
-                            suggested_fix="Use COUNT or select a numeric column",
-                        ))
+                        errors.append(
+                            ValidationError(
+                                HallucinationType.AGGREGATION_ON_TEXT,
+                                "high",
+                                f"KPI '{label}' applies numeric aggregation '{agg}' to text column '{col}'",
+                                field=f"kpis.{label}.formula",
+                                suggested_fix="Use COUNT or select a numeric column",
+                            )
+                        )
 
     # Validate chart aggregations
     for chart in data.get("charts", []):
@@ -407,13 +439,15 @@ def validate_aggregations(
         title = chart.get("title", "untitled")
 
         if agg and agg not in ALLOWED_AGGREGATIONS:
-            errors.append(ValidationError(
-                HallucinationType.INVALID_AGGREGATION,
-                "high",
-                f"Chart '{title}' uses invalid aggregation '{agg}'",
-                field=f"charts.{title}.aggregation",
-                suggested_fix=f"Use one of: {', '.join(sorted(ALLOWED_AGGREGATIONS))}",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.INVALID_AGGREGATION,
+                    "high",
+                    f"Chart '{title}' uses invalid aggregation '{agg}'",
+                    field=f"charts.{title}.aggregation",
+                    suggested_fix=f"Use one of: {', '.join(sorted(ALLOWED_AGGREGATIONS))}",
+                )
+            )
 
     return errors
 
@@ -463,26 +497,30 @@ def validate_charts(
 
         # Validate chart type
         if chart_type not in VALID_CHART_TYPES:
-            errors.append(ValidationError(
-                HallucinationType.INVALID_CHART_TYPE,
-                "high",
-                f"Chart '{title}' has invalid type '{chart_type}'",
-                field=f"charts.{title}.type",
-                suggested_fix=f"Use one of: {', '.join(VALID_CHART_TYPES)}",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.INVALID_CHART_TYPE,
+                    "high",
+                    f"Chart '{title}' has invalid type '{chart_type}'",
+                    field=f"charts.{title}.type",
+                    suggested_fix=f"Use one of: {', '.join(VALID_CHART_TYPES)}",
+                )
+            )
 
         # Check for pie chart with time-series
         if chart_type == "pie" and sheet in column_info:
             x_cols = _extract_column_references(x_axis) if x_axis else []
             for col in x_cols:
                 if col in column_info[sheet] and column_info[sheet][col]["is_date"]:
-                    errors.append(ValidationError(
-                        HallucinationType.PIE_CHART_TIME_SERIES,
-                        "high",
-                        f"Chart '{title}' uses pie chart for time-series data (x_axis='{col}')",
-                        field=f"charts.{title}.type",
-                        suggested_fix="Use 'line', 'area', or 'bar' for time-series",
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.PIE_CHART_TIME_SERIES,
+                            "high",
+                            f"Chart '{title}' uses pie chart for time-series data (x_axis='{col}')",
+                            field=f"charts.{title}.type",
+                            suggested_fix="Use 'line', 'area', or 'bar' for time-series",
+                        )
+                    )
 
         # Check for high cardinality on x_axis
         if sheet in column_info and x_axis:
@@ -491,37 +529,43 @@ def validate_charts(
                 if col in column_info[sheet]:
                     unique = column_info[sheet][col].get("unique_count")
                     if unique and unique > 50:
-                        errors.append(ValidationError(
-                            HallucinationType.HIGH_CARDINALITY_AXIS,
-                            "medium",
-                            f"Chart '{title}' uses high-cardinality column '{col}' as x_axis ({unique} distinct values)",
-                            field=f"charts.{title}.x_axis",
-                            suggested_fix="Use a column with fewer distinct values or add filters",
-                        ))
+                        errors.append(
+                            ValidationError(
+                                HallucinationType.HIGH_CARDINALITY_AXIS,
+                                "medium",
+                                f"Chart '{title}' uses high-cardinality column '{col}' as x_axis ({unique} distinct values)",
+                                field=f"charts.{title}.x_axis",
+                                suggested_fix="Use a column with fewer distinct values or add filters",
+                            )
+                        )
 
         # Check for high cardinality on split_by
         if sheet in column_info and split_by and split_by in column_info[sheet]:
             unique = column_info[sheet][split_by].get("unique_count")
             if unique and unique > 15:
-                errors.append(ValidationError(
-                    HallucinationType.INAPPROPRIATE_SPLIT_BY,
-                    "high",
-                    f"Chart '{title}' uses high-cardinality column '{split_by}' as split_by ({unique} distinct values)",
-                    field=f"charts.{title}.split_by",
-                    suggested_fix="Use a column with ≤15 distinct values or omit split_by",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.INAPPROPRIATE_SPLIT_BY,
+                        "high",
+                        f"Chart '{title}' uses high-cardinality column '{split_by}' as split_by ({unique} distinct values)",
+                        field=f"charts.{title}.split_by",
+                        suggested_fix="Use a column with ≤15 distinct values or omit split_by",
+                    )
+                )
 
         # Check for duplicate charts (same x/y/sheet)
         if x_axis and y_axis and sheet:
             combo = (sheet, x_axis, y_axis)
             if combo in seen_combinations:
-                errors.append(ValidationError(
-                    HallucinationType.DUPLICATE_CHART,
-                    "low",
-                    f"Chart '{title}' is duplicate of another chart (sheet='{sheet}', x='{x_axis}', y='{y_axis}')",
-                    field=f"charts.{title}",
-                    suggested_fix="Remove duplicate or vary x/y/split_by",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.DUPLICATE_CHART,
+                        "low",
+                        f"Chart '{title}' is duplicate of another chart (sheet='{sheet}', x='{x_axis}', y='{y_axis}')",
+                        field=f"charts.{title}",
+                        suggested_fix="Remove duplicate or vary x/y/split_by",
+                    )
+                )
             seen_combinations.add(combo)
 
         # Check for reversed axes (categorical on y, numeric on x)
@@ -538,13 +582,15 @@ def validate_charts(
                     y_is_cat = not y_is_numeric and not column_info[sheet][y_col]["is_date"]
 
                     if x_is_numeric and y_is_cat:
-                        errors.append(ValidationError(
-                            HallucinationType.REVERSED_AXIS,
-                            "medium",
-                            f"Chart '{title}' has numeric x_axis ('{x_col}') and categorical y_axis ('{y_col}')",
-                            field=f"charts.{title}",
-                            suggested_fix="Swap x_axis and y_axis",
-                        ))
+                        errors.append(
+                            ValidationError(
+                                HallucinationType.REVERSED_AXIS,
+                                "medium",
+                                f"Chart '{title}' has numeric x_axis ('{x_col}') and categorical y_axis ('{y_col}')",
+                                field=f"charts.{title}",
+                                suggested_fix="Swap x_axis and y_axis",
+                            )
+                        )
 
     return errors
 
@@ -576,92 +622,110 @@ def validate_joins(
 
         # Check sheets exist
         if left_sheet not in sheet_columns:
-            errors.append(ValidationError(
-                HallucinationType.NONEXISTENT_SHEET,
-                "critical",
-                f"Join references non-existent left sheet '{left_sheet}'",
-                field=f"joins.{left_sheet}+{right_sheet}.left_sheet",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.NONEXISTENT_SHEET,
+                    "critical",
+                    f"Join references non-existent left sheet '{left_sheet}'",
+                    field=f"joins.{left_sheet}+{right_sheet}.left_sheet",
+                )
+            )
             continue
 
         if right_sheet not in sheet_columns:
-            errors.append(ValidationError(
-                HallucinationType.NONEXISTENT_SHEET,
-                "critical",
-                f"Join references non-existent right sheet '{right_sheet}'",
-                field=f"joins.{left_sheet}+{right_sheet}.right_sheet",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.NONEXISTENT_SHEET,
+                    "critical",
+                    f"Join references non-existent right sheet '{right_sheet}'",
+                    field=f"joins.{left_sheet}+{right_sheet}.right_sheet",
+                )
+            )
             continue
 
         # Check join keys present
         if not on_col and not (left_on and right_on):
-            errors.append(ValidationError(
-                HallucinationType.MISSING_JOIN_KEY,
-                "critical",
-                f"Join between '{left_sheet}' and '{right_sheet}' missing join keys",
-                field=f"joins.{left_sheet}+{right_sheet}",
-                suggested_fix="Specify 'on' or both 'left_on' and 'right_on'",
-            ))
+            errors.append(
+                ValidationError(
+                    HallucinationType.MISSING_JOIN_KEY,
+                    "critical",
+                    f"Join between '{left_sheet}' and '{right_sheet}' missing join keys",
+                    field=f"joins.{left_sheet}+{right_sheet}",
+                    suggested_fix="Specify 'on' or both 'left_on' and 'right_on'",
+                )
+            )
             continue
 
         # Validate join key columns exist and types match
         if on_col:
             if on_col not in sheet_columns[left_sheet]:
-                errors.append(ValidationError(
-                    HallucinationType.NONEXISTENT_COLUMN,
-                    "critical",
-                    f"Join key '{on_col}' not found in left sheet '{left_sheet}'",
-                    field=f"joins.{left_sheet}+{right_sheet}.on",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.NONEXISTENT_COLUMN,
+                        "critical",
+                        f"Join key '{on_col}' not found in left sheet '{left_sheet}'",
+                        field=f"joins.{left_sheet}+{right_sheet}.on",
+                    )
+                )
             if on_col not in sheet_columns[right_sheet]:
-                errors.append(ValidationError(
-                    HallucinationType.NONEXISTENT_COLUMN,
-                    "critical",
-                    f"Join key '{on_col}' not found in right sheet '{right_sheet}'",
-                    field=f"joins.{left_sheet}+{right_sheet}.on",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.NONEXISTENT_COLUMN,
+                        "critical",
+                        f"Join key '{on_col}' not found in right sheet '{right_sheet}'",
+                        field=f"joins.{left_sheet}+{right_sheet}.on",
+                    )
+                )
 
             # Check type compatibility
             if on_col in sheet_columns[left_sheet] and on_col in sheet_columns[right_sheet]:
                 left_type = sheet_columns[left_sheet][on_col]
                 right_type = sheet_columns[right_sheet][on_col]
                 if not _types_compatible(left_type, right_type):
-                    errors.append(ValidationError(
-                        HallucinationType.TYPE_INCOMPATIBLE_JOIN,
-                        "high",
-                        f"Join key '{on_col}' has incompatible types: {left_type} vs {right_type}",
-                        field=f"joins.{left_sheet}+{right_sheet}.on",
-                        suggested_fix="Cast one column to match the other type",
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.TYPE_INCOMPATIBLE_JOIN,
+                            "high",
+                            f"Join key '{on_col}' has incompatible types: {left_type} vs {right_type}",
+                            field=f"joins.{left_sheet}+{right_sheet}.on",
+                            suggested_fix="Cast one column to match the other type",
+                        )
+                    )
 
         elif left_on and right_on:
             if left_on not in sheet_columns[left_sheet]:
-                errors.append(ValidationError(
-                    HallucinationType.NONEXISTENT_COLUMN,
-                    "critical",
-                    f"Join left_on '{left_on}' not found in sheet '{left_sheet}'",
-                    field=f"joins.{left_sheet}+{right_sheet}.left_on",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.NONEXISTENT_COLUMN,
+                        "critical",
+                        f"Join left_on '{left_on}' not found in sheet '{left_sheet}'",
+                        field=f"joins.{left_sheet}+{right_sheet}.left_on",
+                    )
+                )
             if right_on not in sheet_columns[right_sheet]:
-                errors.append(ValidationError(
-                    HallucinationType.NONEXISTENT_COLUMN,
-                    "critical",
-                    f"Join right_on '{right_on}' not found in sheet '{right_sheet}'",
-                    field=f"joins.{left_sheet}+{right_sheet}.right_on",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.NONEXISTENT_COLUMN,
+                        "critical",
+                        f"Join right_on '{right_on}' not found in sheet '{right_sheet}'",
+                        field=f"joins.{left_sheet}+{right_sheet}.right_on",
+                    )
+                )
 
             # Check type compatibility
             if left_on in sheet_columns[left_sheet] and right_on in sheet_columns[right_sheet]:
                 left_type = sheet_columns[left_sheet][left_on]
                 right_type = sheet_columns[right_sheet][right_on]
                 if not _types_compatible(left_type, right_type):
-                    errors.append(ValidationError(
-                        HallucinationType.TYPE_INCOMPATIBLE_JOIN,
-                        "high",
-                        f"Join keys have incompatible types: {left_on}({left_type}) vs {right_on}({right_type})",
-                        field=f"joins.{left_sheet}+{right_sheet}",
-                        suggested_fix="Cast one column to match the other type",
-                    ))
+                    errors.append(
+                        ValidationError(
+                            HallucinationType.TYPE_INCOMPATIBLE_JOIN,
+                            "high",
+                            f"Join keys have incompatible types: {left_on}({left_type}) vs {right_on}({right_type})",
+                            field=f"joins.{left_sheet}+{right_sheet}",
+                            suggested_fix="Cast one column to match the other type",
+                        )
+                    )
 
     return errors
 
@@ -685,18 +749,21 @@ def validate_semantic_quality(
         # Pattern: COUNT(ID), SUM(ID), etc.
         if agg in ("count", "sum", "avg") and ("id" in formula or "key" in formula):
             if "unique" not in label and "distinct" not in label:
-                errors.append(ValidationError(
-                    HallucinationType.MEANINGLESS_KPI,
-                    "low",
-                    f"KPI '{kpi.get('label')}' may not provide business value (aggregating ID/key columns)",
-                    field=f"kpis.{kpi.get('label')}",
-                    suggested_fix="Use COUNT(DISTINCT ...) or select a measure column",
-                ))
+                errors.append(
+                    ValidationError(
+                        HallucinationType.MEANINGLESS_KPI,
+                        "low",
+                        f"KPI '{kpi.get('label')}' may not provide business value (aggregating ID/key columns)",
+                        field=f"kpis.{kpi.get('label')}",
+                        suggested_fix="Use COUNT(DISTINCT ...) or select a measure column",
+                    )
+                )
 
     return errors
 
 
 # === Master Validation Function ===
+
 
 def validate_llm_output(
     data: Dict[str, Any],
@@ -786,6 +853,7 @@ def _remove_critical_errors(
 
 # === Helper Functions ===
 
+
 def _is_valid_sheet_reference(sheet: str, all_sheets: Set[str]) -> bool:
     """Check if sheet name or joined sheet name (A+B) is valid."""
     if not sheet:
@@ -823,7 +891,7 @@ def _extract_column_references(formula: str) -> List[str]:
         return []
 
     # Find all word tokens
-    tokens = re.findall(r'\b[A-Za-z_][A-Za-z0-9_\s]*\b', formula)
+    tokens = re.findall(r"\b[A-Za-z_][A-Za-z0-9_\s]*\b", formula)
 
     # Filter out known functions and keywords
     excluded = ALLOWED_FUNCTIONS | {"AND", "OR", "NOT", "TRUE", "FALSE"}
@@ -843,7 +911,7 @@ def _extract_functions(formula: str) -> List[str]:
         return []
 
     # Match function calls: FUNC_NAME(
-    pattern = r'\b([A-Z_]+)\s*\('
+    pattern = r"\b([A-Z_]+)\s*\("
     matches = re.findall(pattern, formula.upper())
     return list(set(matches))
 
@@ -852,7 +920,7 @@ def _is_formula(text: str) -> bool:
     """Check if text looks like a formula (contains functions or operators)."""
     if not text:
         return False
-    return bool(re.search(r'[+\-*/()]|[A-Z_]+\(', text))
+    return bool(re.search(r"[+\-*/()]|[A-Z_]+\(", text))
 
 
 def _check_formula_syntax(formula: str) -> Optional[str]:
@@ -867,11 +935,11 @@ def _check_formula_syntax(formula: str) -> Optional[str]:
         return f"Unbalanced parentheses: {open_count} open, {close_count} close"
 
     # Check for empty parentheses
-    if re.search(r'\(\s*\)', formula):
+    if re.search(r"\(\s*\)", formula):
         return "Empty parentheses found"
 
     # Check for double operators
-    if re.search(r'[+\-*/]{2,}', formula):
+    if re.search(r"[+\-*/]{2,}", formula):
         return "Consecutive operators found"
 
     return None
@@ -886,7 +954,7 @@ def _check_type_compatibility(
     columns = _extract_column_references(formula)
 
     # Check if numeric operations on text columns
-    has_numeric_op = bool(re.search(r'[+\-*/]', formula))
+    has_numeric_op = bool(re.search(r"[+\-*/]", formula))
     functions = _extract_functions(formula)
     has_numeric_func = bool(set(functions) & {"SUM", "AVG", "MEDIAN", "STDEV", "VAR"})
 

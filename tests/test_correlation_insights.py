@@ -10,11 +10,13 @@ from app.pipeline.schema_detector import ColumnSchema, DetectedSchema, SheetSche
 def test_detect_correlation_insights_strong_positive():
     """Test detection of strong positive correlation."""
     # Create data with strong positive correlation
-    df = pl.DataFrame({
-        "Sales": [100, 200, 300, 400, 500],
-        "Marketing": [10, 20, 30, 40, 50],
-        "Region": ["A", "B", "C", "D", "E"],
-    })
+    df = pl.DataFrame(
+        {
+            "Sales": [100, 200, 300, 400, 500],
+            "Marketing": [10, 20, 30, 40, 50],
+            "Region": ["A", "B", "C", "D", "E"],
+        }
+    )
 
     schema = DetectedSchema(
         sheets=[
@@ -65,10 +67,12 @@ def test_detect_correlation_insights_strong_positive():
 def test_detect_correlation_insights_strong_negative():
     """Test detection of strong negative correlation."""
     # Create data with strong negative correlation
-    df = pl.DataFrame({
-        "Price": [100, 90, 80, 70, 60],
-        "Demand": [10, 20, 30, 40, 50],
-    })
+    df = pl.DataFrame(
+        {
+            "Price": [100, 90, 80, 70, 60],
+            "Demand": [10, 20, 30, 40, 50],
+        }
+    )
 
     schema = DetectedSchema(
         sheets=[
@@ -111,10 +115,12 @@ def test_detect_correlation_insights_strong_negative():
 def test_detect_correlation_insights_below_threshold():
     """Test that weak correlations are not reported."""
     # Create data with weak correlation
-    df = pl.DataFrame({
-        "A": [1, 2, 3, 4, 5],
-        "B": [5, 4, 6, 2, 8],  # Random values, weak correlation
-    })
+    df = pl.DataFrame(
+        {
+            "A": [1, 2, 3, 4, 5],
+            "B": [5, 4, 6, 2, 8],  # Random values, weak correlation
+        }
+    )
 
     schema = DetectedSchema(
         sheets=[
@@ -152,10 +158,12 @@ def test_detect_correlation_insights_below_threshold():
 
 def test_detect_correlation_insights_no_numeric_columns():
     """Test that no insights are generated when there are no numeric columns."""
-    df = pl.DataFrame({
-        "Name": ["Alice", "Bob", "Charlie"],
-        "City": ["NYC", "LA", "Chicago"],
-    })
+    df = pl.DataFrame(
+        {
+            "Name": ["Alice", "Bob", "Charlie"],
+            "City": ["NYC", "LA", "Chicago"],
+        }
+    )
 
     schema = DetectedSchema(
         sheets=[
@@ -193,11 +201,13 @@ def test_detect_correlation_insights_no_numeric_columns():
 def test_detect_correlation_insights_multiple_pairs():
     """Test detection of multiple correlations in same dataset."""
     # Create data with multiple correlated pairs
-    df = pl.DataFrame({
-        "A": [1, 2, 3, 4, 5],
-        "B": [2, 4, 6, 8, 10],  # Strong positive with A
-        "C": [5, 4, 3, 2, 1],   # Strong negative with A
-    })
+    df = pl.DataFrame(
+        {
+            "A": [1, 2, 3, 4, 5],
+            "B": [2, 4, 6, 8, 10],  # Strong positive with A
+            "C": [5, 4, 3, 2, 1],  # Strong negative with A
+        }
+    )
 
     schema = DetectedSchema(
         sheets=[
@@ -243,10 +253,12 @@ def test_detect_correlation_insights_multiple_pairs():
 
 def test_detect_correlation_insights_metadata():
     """Test that insight metadata is correctly populated."""
-    df = pl.DataFrame({
-        "X": [1, 2, 3, 4, 5],
-        "Y": [2, 4, 6, 8, 10],
-    })
+    df = pl.DataFrame(
+        {
+            "X": [1, 2, 3, 4, 5],
+            "Y": [2, 4, 6, 8, 10],
+        }
+    )
 
     schema = DetectedSchema(
         sheets=[

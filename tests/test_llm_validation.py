@@ -182,9 +182,7 @@ def test_validate_wrong_sheet_for_column(sample_schema):
 
     errors = validate_schema_references(data, sample_schema)
     assert len(errors) > 0
-    assert any(
-        e.hallucination_type == HallucinationType.WRONG_SHEET_FOR_COLUMN for e in errors
-    )
+    assert any(e.hallucination_type == HallucinationType.WRONG_SHEET_FOR_COLUMN for e in errors)
 
 
 def test_validate_chart_references(sample_schema):
@@ -315,9 +313,7 @@ def test_validate_aggregation_on_id_column(sample_schema, sample_stats_by_sheet)
 
     errors = validate_aggregations(data, sample_schema, sample_stats_by_sheet)
     assert len(errors) > 0
-    assert any(
-        e.hallucination_type == HallucinationType.AGGREGATION_ON_ID_COLUMN for e in errors
-    )
+    assert any(e.hallucination_type == HallucinationType.AGGREGATION_ON_ID_COLUMN for e in errors)
 
 
 def test_validate_aggregation_on_text(sample_schema, sample_stats_by_sheet):
@@ -407,9 +403,7 @@ def test_validate_high_cardinality_split_by(sample_schema, sample_stats_by_sheet
 
     errors = validate_charts(data, sample_schema, sample_stats_by_sheet)
     assert len(errors) > 0
-    assert any(
-        e.hallucination_type == HallucinationType.INAPPROPRIATE_SPLIT_BY for e in errors
-    )
+    assert any(e.hallucination_type == HallucinationType.INAPPROPRIATE_SPLIT_BY for e in errors)
 
 
 def test_validate_duplicate_chart(sample_schema):

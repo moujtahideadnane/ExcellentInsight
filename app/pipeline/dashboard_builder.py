@@ -69,7 +69,7 @@ def detect_correlation_insights(
 
         # Check pairs of numeric columns
         for i, col1 in enumerate(numeric_cols):
-            for col2 in numeric_cols[i+1:]:
+            for col2 in numeric_cols[i + 1 :]:
                 try:
                     # Compute correlation
                     corr_value = df.select(pl.corr(col1, col2)).item()
@@ -95,19 +95,21 @@ def detect_correlation_insights(
                         strength = "moderate"
                         severity = "info"
 
-                    insights.append({
-                        "type": "correlation",
-                        "severity": severity,
-                        "title": f"{strength.title()} {direction.title()} Correlation Detected",
-                        "text": f"{col1} and {col2} show a {strength} {direction} correlation ({corr_value:.2f}) in '{sheet.name}' - they {interpretation}.",
-                        "metadata": {
-                            "sheet": sheet.name,
-                            "column1": col1,
-                            "column2": col2,
-                            "correlation": round(corr_value, 3),
-                            "direction": direction,
+                    insights.append(
+                        {
+                            "type": "correlation",
+                            "severity": severity,
+                            "title": f"{strength.title()} {direction.title()} Correlation Detected",
+                            "text": f"{col1} and {col2} show a {strength} {direction} correlation ({corr_value:.2f}) in '{sheet.name}' - they {interpretation}.",
+                            "metadata": {
+                                "sheet": sheet.name,
+                                "column1": col1,
+                                "column2": col2,
+                                "correlation": round(corr_value, 3),
+                                "direction": direction,
+                            },
                         }
-                    })
+                    )
 
                 except Exception as e:
                     logger.debug(f"Could not compute correlation between {col1} and {col2}: {e}")

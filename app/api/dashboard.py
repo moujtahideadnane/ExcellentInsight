@@ -540,9 +540,7 @@ async def export_pdf(
         return StreamingResponse(
             pdf_buffer,
             media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"attachment; filename=dashboard_{job_id}.pdf"
-            },
+            headers={"Content-Disposition": f"attachment; filename=dashboard_{job_id}.pdf"},
         )
 
     except HTTPException:
@@ -585,9 +583,7 @@ async def export_excel(
         return StreamingResponse(
             excel_buffer,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={
-                "Content-Disposition": f"attachment; filename=dashboard_{job_id}.xlsx"
-            },
+            headers={"Content-Disposition": f"attachment; filename=dashboard_{job_id}.xlsx"},
         )
 
     except HTTPException:
