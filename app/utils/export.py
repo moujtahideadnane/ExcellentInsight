@@ -5,10 +5,11 @@ Supports PDF and Excel export formats with professional styling.
 """
 
 import io
-import structlog
-import xlsxwriter
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
+import xlsxwriter
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
