@@ -41,6 +41,13 @@ services:
       timeout: 5s
       retries: 5
 
+  # Init container to fix volume permissions for the non-root appuser
+  init-uploads:
+    image: alpine:latest
+    command: /bin/sh -c "chown -R 114:65534 /app/uploads && chmod -R 775 /app/uploads"
+    volumes:
+      - uploads:/app/uploads
+
   backend:
     build: .
     ports:
@@ -57,6 +64,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      init-uploads:
+        condition: service_completed_successfully
     command: uvicorn app.main:app --host 0.0.0.0 --port 5000
 
   worker:
@@ -73,6 +82,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      init-uploads:
+        condition: service_completed_successfully
     command: arq app.workers.settings.WorkerSettings
 
   frontend:
