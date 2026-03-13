@@ -32,7 +32,7 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
   const progress = data?.progress || 0
 
   return (
-    <div className="w-full max-w-2xl py-4 text-left">
+    <div className="w-full max-w-2xl mx-auto py-4 text-left">
       {/* Header */}
       <div className="mb-6 text-left">
         <div className={cn(
