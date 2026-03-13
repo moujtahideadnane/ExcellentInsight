@@ -6,36 +6,36 @@ import { Terminal } from 'lucide-react'
 
 export default function DashboardLoading() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 bg-[#000000]">
+    <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 bg-ve-bg">
       {/* Upload zone skeleton */}
       <div className="w-full max-w-2xl space-y-12">
         <div className="space-y-4">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="h-8 w-8 rounded-[4px] bg-[#111111] border border-[#333333] flex items-center justify-center">
-              <Terminal className="h-4 w-4 text-[#888888]" />
+            <div className="h-8 w-8 rounded-[4px] bg-ve-surface border border-ve-border flex items-center justify-center">
+              <Terminal className="h-4 w-4 text-ve-muted" />
             </div>
             <motion.div 
               animate={{ opacity: [0.3, 0.6, 0.3] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="h-4 w-32 bg-[#111111] rounded-[2px]" 
+              className="h-4 w-32 bg-ve-surface rounded-[2px]" 
             />
           </div>
-          <div className="h-[320px] rounded-[6px] border border-dashed border-[#333333] bg-[#0A0A0A] flex flex-col items-center justify-center gap-6 relative overflow-hidden">
+          <div className="h-[320px] rounded-[6px] border border-dashed border-ve-border bg-ve-skeleton flex flex-col items-center justify-center gap-6 relative overflow-hidden">
              <motion.div 
                animate={{ scale: [0.95, 1.05, 0.95], opacity: [0.3, 0.6, 0.3] }}
                transition={{ duration: 2, repeat: Infinity }}
-               className="h-16 w-16 rounded-full bg-[#111111] border border-[#333333]" 
+               className="h-16 w-16 rounded-full bg-ve-surface border border-ve-border" 
              />
              <div className="space-y-3 text-center px-6">
                <motion.div 
                  animate={{ opacity: [0.3, 0.6, 0.3] }}
                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                 className="h-5 w-64 bg-[#111111] rounded-[2px] mx-auto" 
+                 className="h-5 w-64 bg-ve-surface rounded-[2px] mx-auto" 
                />
                <motion.div 
                  animate={{ opacity: [0.3, 0.6, 0.3] }}
                  transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
-                 className="h-3 w-48 bg-[#111111] rounded-[2px] mx-auto" 
+                 className="h-3 w-48 bg-ve-surface rounded-[2px] mx-auto" 
                />
              </div>
              {/* Shimmer */}
@@ -54,7 +54,7 @@ export default function DashboardLoading() {
               key={i} 
               animate={{ opacity: [0.2, 0.4, 0.2] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
-              className="h-9 w-32 bg-[#111111] border border-[#333333] rounded-[4px]" 
+              className="h-9 w-32 bg-ve-surface border border-ve-border rounded-[4px]" 
             />
           ))}
         </div>

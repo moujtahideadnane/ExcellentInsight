@@ -25,13 +25,13 @@ export default function SettingsPage() {
   if (!isAuthenticated) return null
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto min-h-screen">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-12 border-b border-[#333333] pb-8">
-         <div className="text-[10px] font-mono text-[#888888] uppercase tracking-widest mb-2">Workspace Integrity</div>
-         <h1 className="text-[32px] font-semibold tracking-tight text-[#EDEDED] leading-tight">
-            System <span className="text-[#888888]">Configuration</span>
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto min-h-screen"> {/* REFACTOR: [consolidate-hex] */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-12 border-b border-ve-border pb-8">
+         <div className="text-[10px] font-mono text-ve-muted uppercase tracking-widest mb-2">Workspace Integrity</div>
+         <h1 className="text-[32px] font-semibold tracking-tight text-ve-text leading-tight">
+            System <span className="text-ve-muted">Configuration</span>
          </h1>
-         <p className="mt-3 text-[14px] font-mono text-[#888888] max-w-lg">
+         <p className="mt-3 text-[14px] font-mono text-ve-muted max-w-lg">
             Modify underlying environmental values, access scopes, and telemetry nodes.
          </p>
       </motion.div>
@@ -47,8 +47,8 @@ export default function SettingsPage() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-[4px] text-[13px] font-medium text-left transition-all shrink-0 lg:shrink w-full border border-transparent",
                   activeSection === s.id
-                    ? "bg-[#111111] text-[#EDEDED] border-[#333333]"
-                    : "text-[#888888] hover:bg-[#000000] hover:text-[#EDEDED] hover:border-[#333333]"
+                    ? "bg-ve-surface text-ve-text border-ve-border"
+                    : "text-ve-muted hover:bg-ve-bg hover:text-ve-text hover:border-ve-border"
                 )}
               >
                 <s.icon className="h-4 w-4 shrink-0" />

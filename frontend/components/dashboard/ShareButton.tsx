@@ -107,7 +107,7 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
     <>
       <button
         onClick={handleOpen}
-        className="flex items-center justify-center h-8 w-8 rounded-[4px] border border-[#333333] hover:bg-[#111111] transition-colors text-[#888888] hover:text-[#EDEDED]"
+        className="flex items-center justify-center h-8 w-8 rounded-[4px] border border-ve-border hover:bg-ve-surface transition-colors text-ve-muted hover:text-ve-text"
         title="Share dashboard"
         aria-label="Share dashboard"
       >
@@ -129,22 +129,22 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#111111] border border-[#333333] rounded-[6px] shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-ve-surface border border-ve-border rounded-[6px] shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-5 border-b border-[#333333]">
+              <div className="flex items-center justify-between p-5 border-b border-ve-border">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-[4px] bg-[#0070F3]/10 border border-[#0070F3]/30 flex items-center justify-center">
-                    <Link2 className="h-4 w-4 text-[#0070F3]" />
+                  <div className="h-8 w-8 rounded-[4px] bg-ve-blue-muted border border-ve-blue-border flex items-center justify-center">
+                    <Link2 className="h-4 w-4 text-ve-blue" />
                   </div>
                   <div>
-                    <h2 className="text-[14px] font-semibold text-[#EDEDED]">Share Dashboard</h2>
-                    <p className="text-[10px] text-[#888888] font-mono">Create and manage shareable links</p>
+                    <h2 className="text-[14px] font-semibold text-ve-text">Share Dashboard</h2>
+                    <p className="text-[10px] text-ve-muted font-mono">Create and manage shareable links</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="h-6 w-6 rounded-[4px] hover:bg-[#222222] flex items-center justify-center text-[#888888] hover:text-[#EDEDED] transition-colors"
+                  className="h-6 w-6 rounded-[4px] hover:bg-ve-border-subtle flex items-center justify-center text-ve-muted hover:text-ve-text transition-colors"
                   aria-label="Close dialog"
                 >
                   <X className="h-4 w-4" />
@@ -155,14 +155,14 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 {/* Create new share buttons */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">
                     Create New Link
                   </label>
                   <div className="flex gap-2">
                     <button
                       onClick={() => createShare()}
                       disabled={isLoading}
-                      className="flex-1 px-3 py-2 rounded-[4px] bg-[#0070F3] hover:bg-[#0060D3] text-white text-[11px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-3 py-2 rounded-[4px] bg-ve-blue hover:bg-blue-700 text-white text-[11px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
@@ -173,14 +173,14 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                     <button
                       onClick={() => createShare(7)}
                       disabled={isLoading}
-                      className="flex-1 px-3 py-2 rounded-[4px] bg-[#222222] hover:bg-[#333333] text-[#EDEDED] text-[11px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-3 py-2 rounded-[4px] bg-ve-border-subtle hover:bg-ve-border text-ve-text text-[11px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       7 Days
                     </button>
                     <button
                       onClick={() => createShare(30)}
                       disabled={isLoading}
-                      className="flex-1 px-3 py-2 rounded-[4px] bg-[#222222] hover:bg-[#333333] text-[#EDEDED] text-[11px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-3 py-2 rounded-[4px] bg-ve-border-subtle hover:bg-ve-border text-ve-text text-[11px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       30 Days
                     </button>
@@ -190,7 +190,7 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                 {/* Existing shares */}
                 {shares.length > 0 && (
                   <div className="space-y-2">
-                    <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">
                       Active Links ({shares.filter(s => s.is_active).length})
                     </label>
                     <div className="space-y-2">
@@ -199,8 +199,8 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                           key={share.id}
                           className={`p-3 rounded-[4px] border ${
                             share.is_active
-                              ? 'bg-[#0A0A0A] border-[#333333]'
-                              : 'bg-[#1A0808] border-[#5C1A1A] opacity-60'
+                              ? 'bg-ve-skeleton border-ve-border'
+                              : 'bg-red-950 border-ve-error-border opacity-60'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
@@ -208,19 +208,19 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                               <div className="flex items-center gap-2 mb-1">
                                 <span className={`px-1.5 py-0.5 rounded-[2px] text-[8px] font-mono uppercase tracking-wider ${
                                   share.is_active
-                                    ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30'
-                                    : 'bg-[#FF4444]/10 text-[#FF4444] border border-[#FF4444]/30'
+                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30'
+                                    : 'bg-ve-error/10 text-ve-error border border-ve-error/30'
                                 }`}>
                                   {share.is_active ? 'Active' : 'Revoked'}
                                 </span>
                                 {share.expires_at && (
-                                  <span className="flex items-center gap-1 text-[9px] text-[#888888]">
+                                  <span className="flex items-center gap-1 text-[9px] text-ve-muted">
                                     <Clock className="h-3 w-3" />
                                     Expires {formatDate(share.expires_at)}
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 text-[9px] text-[#888888]">
+                              <div className="flex items-center gap-1 text-[9px] text-ve-muted">
                                 <Eye className="h-3 w-3" />
                                 {share.view_count} views • Created {formatDate(share.created_at)}
                               </div>
@@ -230,18 +230,18 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => copyToClipboard(share.share_token, share.share_url)}
-                                  className="h-7 w-7 rounded-[4px] bg-[#222222] hover:bg-[#333333] flex items-center justify-center text-[#EDEDED] transition-colors"
+                                  className="h-7 w-7 rounded-[4px] bg-ve-border-subtle hover:bg-ve-border flex items-center justify-center text-ve-text transition-colors"
                                   title="Copy link"
                                 >
                                   {copiedToken === share.share_token ? (
-                                    <Check className="h-3.5 w-3.5 text-[#10B981]" />
+                                    <Check className="h-3.5 w-3.5 text-emerald-500" />
                                   ) : (
                                     <Copy className="h-3.5 w-3.5" />
                                   )}
                                 </button>
                                 <button
                                   onClick={() => revokeShare(share.id)}
-                                  className="h-7 w-7 rounded-[4px] bg-[#2A0808] hover:bg-[#3A0A0A] border border-[#5C1A1A] hover:border-[#FF4444] flex items-center justify-center text-[#FF4444] transition-colors"
+                                  className="h-7 w-7 rounded-[4px] bg-ve-error-bg hover:bg-red-950 border border-ve-error-border hover:border-ve-error flex items-center justify-center text-ve-error transition-colors"
                                   title="Revoke link"
                                 >
                                   <X className="h-3.5 w-3.5" />
@@ -251,8 +251,8 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                           </div>
 
                           {share.is_active && (
-                            <div className="mt-2 p-2 rounded-[4px] bg-[#000000] border border-[#333333]">
-                              <code className="text-[9px] text-[#888888] font-mono break-all">
+                            <div className="mt-2 p-2 rounded-[4px] bg-ve-bg border border-ve-border">
+                              <code className="text-[9px] text-ve-muted font-mono break-all">
                                 {origin}{share.share_url}
                               </code>
                             </div>
@@ -265,9 +265,9 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
 
                 {shares.length === 0 && !isLoading && (
                   <div className="py-8 text-center">
-                    <Link2 className="h-8 w-8 mx-auto mb-2 text-[#333333]" />
-                    <p className="text-[11px] text-[#888888] font-mono">No share links yet</p>
-                    <p className="text-[9px] text-[#666666] font-mono mt-1">Create one to get started</p>
+                    <Link2 className="h-8 w-8 mx-auto mb-2 text-ve-border" />
+                    <p className="text-[11px] text-ve-muted font-mono">No share links yet</p>
+                    <p className="text-[9px] text-ve-dimmed font-mono mt-1">Create one to get started</p>
                   </div>
                 )}
               </div>

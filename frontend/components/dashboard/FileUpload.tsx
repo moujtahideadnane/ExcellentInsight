@@ -96,8 +96,8 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
             className={cn(
               "p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-colors border border-dashed rounded-[6px] relative overflow-hidden group",
               isDragging 
-                ? "border-[#EDEDED] bg-[#111111]" 
-                : "border-[#333333] bg-[#000000] hover:bg-[#111111] hover:border-[#888888]"
+                ? "border-ve-text bg-ve-surface" 
+                : "border-ve-border bg-ve-bg hover:bg-ve-surface hover:border-ve-muted"
             )}
           >
             <input
@@ -109,44 +109,44 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
             />
 
             <div className="mb-6 flex items-center justify-center transition-transform group-hover:scale-[1.02]">
-              <Database className={cn("h-8 w-8 transition-colors duration-200", isDragging ? "text-[#EDEDED]" : "text-[#888888]")} />
+              <Database className={cn("h-8 w-8 transition-colors duration-200", isDragging ? "text-ve-text" : "text-ve-muted")} />
             </div>
 
-            <h3 className="text-[16px] font-semibold tracking-tight text-[#EDEDED] mb-2">
+            <h3 className="text-[16px] font-semibold tracking-tight text-ve-text mb-2">
               {isDragging ? 'Initialize ingestion.' : 'Deploy dataset'}
             </h3>
-            <p className="text-[13px] text-[#888888] font-medium max-w-sm">
-              Drag and drop your schema or <span className="text-[#EDEDED] underline underline-offset-4 cursor-pointer">browse local registry</span>
+            <p className="text-[13px] text-ve-muted font-medium max-w-sm">
+              Drag and drop your schema or <span className="text-ve-text underline underline-offset-4 cursor-pointer">browse local registry</span>
             </p>
             
             <div className="mt-8 flex items-center justify-center gap-2">
               {['.xlsx', '.csv', '.xls'].map(ext => (
-                <span key={ext} className="px-2 py-0.5 rounded-[4px] bg-[#111111] border border-[#333333] text-[10px] font-mono text-[#888888]">
+                <span key={ext} className="px-2 py-0.5 rounded-[4px] bg-ve-surface border border-ve-border text-[10px] font-mono text-ve-muted">
                   {ext}
                 </span>
               ))}
             </div>
             
             {/* Vercel Edge corner accents */}
-            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#333333] opacity-50" />
-            <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#333333] opacity-50" />
-            <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[#333333] opacity-50" />
-            <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#333333] opacity-50" />
+            <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-ve-border opacity-50" />
+            <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-ve-border opacity-50" />
+            <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-ve-border opacity-50" />
+            <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-ve-border opacity-50" />
           </motion.div>
         ) : (
           <motion.div
             key="file-selected"
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[6px] border border-[#333333] bg-[#111111] p-4 flex items-center justify-between gap-4"
+            className="rounded-[6px] border border-ve-border bg-ve-surface p-4 flex items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="h-10 w-10 shrink-0 bg-[#1C1C1C] border border-[#333333] rounded-[4px] flex items-center justify-center">
-                <FileIcon className="h-5 w-5 text-[#EDEDED]" />
+              <div className="h-10 w-10 shrink-0 bg-ve-elevated border border-ve-border rounded-[4px] flex items-center justify-center">
+                <FileIcon className="h-5 w-5 text-ve-text" />
               </div>
               <div className="min-w-0 text-left">
-                <p className="text-[14px] font-semibold text-[#EDEDED] truncate">{file.name}</p>
-                <p className="text-[12px] font-mono text-[#888888] mt-0.5">{fileSizeMb} MB / READY_STATE</p>
+                <p className="text-[14px] font-semibold text-ve-text truncate">{file.name}</p>
+                <p className="text-[12px] font-mono text-ve-muted mt-0.5">{fileSizeMb} MB / READY_STATE</p>
               </div>
             </div>
 
@@ -154,14 +154,14 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
               <button
                 onClick={() => setFile(null)}
                 disabled={isUploading}
-                className="h-8 w-8 flex items-center justify-center rounded-[4px] border border-[#333333] text-[#888888] hover:text-[#EDEDED] hover:bg-[#1C1C1C] transition-colors disabled:opacity-50"
+                className="h-8 w-8 flex items-center justify-center rounded-[4px] border border-ve-border text-ve-muted hover:text-ve-text hover:bg-ve-elevated transition-colors disabled:opacity-50"
               >
                 <X className="h-4 w-4" />
               </button>
               <button
                 onClick={uploadFile}
                 disabled={isUploading}
-                className="h-8 px-4 rounded-[4px] bg-[#EDEDED] text-[#000000] text-[13px] font-medium hover:bg-[#CCCCCC] transition-colors flex items-center gap-2 disabled:opacity-70"
+                className="h-8 px-4 rounded-[4px] bg-ve-btn-primary text-ve-btn-text text-[13px] font-medium hover:bg-ve-btn-hover transition-colors flex items-center gap-2 disabled:opacity-70"
               >
                 {isUploading ? (
                   <>
@@ -188,9 +188,9 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden mt-4"
           >
-            <div className="flex items-center gap-3 px-4 py-3 rounded-[4px] bg-[#2A0808] border border-[#5C1A1A]">
-              <AlertCircle className="h-4 w-4 shrink-0 text-[#FF4444]" />
-              <p className="text-[13px] font-mono text-[#FF4444]">{error}</p>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-[4px] bg-ve-error-bg border border-ve-error-border">
+              <AlertCircle className="h-4 w-4 shrink-0 text-ve-error" />
+              <p className="text-[13px] font-mono text-ve-error">{error}</p>
             </div>
           </motion.div>
         )}

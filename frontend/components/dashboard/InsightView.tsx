@@ -13,37 +13,37 @@ interface InsightViewProps {
 const severityConfig: Record<string, { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; border: string; bg: string; text: string; label: string }> = {
   high: { 
     icon: AlertCircle, 
-    border: 'border-[#FF4444]', 
-    bg: 'bg-[#2A0808]',
-    text: 'text-[#FF4444]',
+    border: 'border-ve-error', 
+    bg: 'bg-ve-error-bg',
+    text: 'text-ve-error',
     label: 'CRITICAL'
   },
   medium: { 
     icon: Target, 
-    border: 'border-[#F5A623]', 
-    bg: 'bg-[#291704]',
-    text: 'text-[#F5A623]',
+    border: 'border-ve-warning', 
+    bg: 'bg-amber-950',
+    text: 'text-ve-warning',
     label: 'STRATEGIC' 
   },
   low: { 
     icon: Info, 
-    border: 'border-[#0070F3]', 
-    bg: 'bg-[#001736]',
-    text: 'text-[#0070F3]',
+    border: 'border-ve-blue', 
+    bg: 'bg-blue-950',
+    text: 'text-ve-blue',
     label: 'OBSERVATION'
   },
   info: { 
     icon: Info, 
-    border: 'border-[#333333]', 
-    bg: 'bg-[#111111]',
-    text: 'text-[#888888]',
+    border: 'border-ve-border', 
+    bg: 'bg-ve-surface',
+    text: 'text-ve-muted',
     label: 'NOTE'
   },
   warning: { 
     icon: AlertCircle, 
-    border: 'border-[#F5A623]', 
-    bg: 'bg-[#291704]',
-    text: 'text-[#F5A623]',
+    border: 'border-ve-warning', 
+    bg: 'bg-amber-950',
+    text: 'text-ve-warning',
     label: 'ALERT'
   },
 }
@@ -57,15 +57,24 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 export default function InsightView({ insights }: InsightViewProps) {
   if (!insights || insights.length === 0) return null
 
+  let correlationCount = 0
+  const displayInsights = insights.filter(insight => {
+    if (insight.type === 'correlation') {
+      correlationCount++
+      return correlationCount <= 3
+    }
+    return true
+  })
+
   return (
     <div className="space-y-6 mt-8">
       <div className="flex items-center gap-4">
-        <h2 className="text-[10px] font-mono uppercase tracking-widest text-[#888888] whitespace-nowrap">Automated Reasoning</h2>
-        <div className="flex-1 h-px bg-[#333333]" />
+        <h2 className="text-[10px] font-mono uppercase tracking-widest text-ve-muted whitespace-nowrap">Automated Reasoning</h2>
+        <div className="flex-1 h-px bg-ve-border" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#333333] border border-[#333333] rounded-[6px] overflow-hidden">
-        {insights.map((insight, index) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-ve-border border border-ve-border rounded-[6px] overflow-hidden">
+        {displayInsights.map((insight, index) => {
           const fallback = severityConfig.info || severityConfig.low || { icon: Info, border: '', bg: '', text: '', label: '' }
           const config = severityConfig[insight.severity as keyof typeof severityConfig] || fallback
           const Icon = config.icon
@@ -78,17 +87,17 @@ export default function InsightView({ insights }: InsightViewProps) {
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                "p-5 relative overflow-hidden flex flex-col justify-start bg-[#000000] hover:bg-[#111111] transition-colors border-t-2",
+                "p-5 relative overflow-hidden flex flex-col justify-start bg-ve-bg hover:bg-ve-surface transition-colors border-t-2",
                 config.border
               )}
               style={{ minHeight: '180px' }}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-[2px] flex items-center justify-center bg-[#111111] border border-[#333333]">
-                    <TypeIcon className="h-3.5 w-3.5 text-[#888888]" />
+                  <div className="h-6 w-6 rounded-[2px] flex items-center justify-center bg-ve-surface border border-ve-border">
+                    <TypeIcon className="h-3.5 w-3.5 text-ve-muted" />
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-wider text-[#888888]">
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-ve-muted">
                     {(insight.type || 'Insight').replace('_', ' ')}
                   </span>
                 </div>
@@ -101,11 +110,11 @@ export default function InsightView({ insights }: InsightViewProps) {
               </div>
 
               {insight.title && (
-                <h4 className="text-[14px] font-medium text-[#EDEDED] mb-2 leading-tight">
+                <h4 className="text-[14px] font-medium text-ve-text mb-2 leading-tight">
                   {insight.title}
                 </h4>
               )}
-              <p className="text-[13px] leading-relaxed text-[#888888] font-mono">
+              <p className="text-[13px] leading-relaxed text-ve-muted font-mono">
                 {insight.text}
               </p>
             </motion.div>

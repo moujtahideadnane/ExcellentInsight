@@ -87,14 +87,14 @@ export function ApiKeysSection() {
     }
   }
 
-  if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-[#0070F3]" /></div>
+  if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-ve-blue" /></div> // REFACTOR: [consolidate-hex]
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <SectionHeader title="Access Tokens" subtitle="Machine identities for programmatic system integration." />
         {!showCreateForm && (
-          <button onClick={() => setShowCreateForm(true)} className="flex items-center gap-2 rounded-[4px] bg-[#EDEDED] text-[#000000] px-4 py-1.5 font-medium text-[12px] hover:bg-[#CCCCCC] transition-colors shrink-0">
+          <button onClick={() => setShowCreateForm(true)} className="flex items-center gap-2 rounded-[4px] bg-ve-btn-primary text-ve-btn-text px-4 py-1.5 font-medium text-[12px] hover:bg-ve-btn-hover transition-colors shrink-0">
             <Plus className="h-3.5 w-3.5" /> Initialize Token
           </button>
         )}
@@ -106,25 +106,25 @@ export function ApiKeysSection() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="rounded-[4px] border border-[#0070F3] bg-[#000000] p-6"
+            className="rounded-[4px] border border-ve-blue bg-ve-bg p-6"
           >
              <div className="flex items-center gap-3 mb-4">
-               <div className="h-8 w-8 rounded-[4px] bg-blue-500/10 flex items-center justify-center shrink-0">
-                 <Key className="h-4 w-4 text-[#0070F3]" />
+               <div className="h-8 w-8 rounded-[4px] bg-ve-blue-muted flex items-center justify-center shrink-0">
+                 <Key className="h-4 w-4 text-ve-blue" />
                </div>
                <div>
-                  <span className="text-[13px] font-medium text-[#EDEDED] block tracking-tight">Access token generated</span>
-                  <p className="text-[11px] font-mono text-[#888888] mt-0.5">This secret is shown once. Store it securely in your local environment.</p>
+                  <span className="text-[13px] font-medium text-ve-text block tracking-tight">Access token generated</span>
+                  <p className="text-[11px] font-mono text-ve-muted mt-0.5">This secret is shown once. Store it securely in your local environment.</p>
                </div>
              </div>
              
-             <div className="flex items-center gap-2 bg-[#111111] rounded-[4px] border border-[#333333] px-4 py-3">
-               <code className="flex-1 text-[13px] text-[#EDEDED] font-mono break-all selection:bg-blue-500/30">{revealedKey.key}</code>
-               <button onClick={() => handleCopy(revealedKey.key, revealedKey.id)} className="shrink-0 p-2 rounded-[4px] hover:bg-[#222222] border border-transparent hover:border-[#333333] transition-colors">
-                  {copiedId === revealedKey.id ? <Check className="h-4 w-4 text-[#0070F3]" /> : <Copy className="h-4 w-4 text-[#888888]" />}
+             <div className="flex items-center gap-2 bg-ve-surface rounded-[4px] border border-ve-border px-4 py-3">
+               <code className="flex-1 text-[13px] text-ve-text font-mono break-all selection:bg-blue-500/30">{revealedKey.key}</code>
+               <button onClick={() => handleCopy(revealedKey.key, revealedKey.id)} className="shrink-0 p-2 rounded-[4px] hover:bg-ve-border-subtle border border-transparent hover:border-ve-border transition-colors">
+                  {copiedId === revealedKey.id ? <Check className="h-4 w-4 text-ve-blue" /> : <Copy className="h-4 w-4 text-ve-muted" />}
                </button>
              </div>
-             <button onClick={() => setRevealedKey(null)} className="mt-4 text-[9px] font-mono uppercase tracking-widest text-[#888888] hover:text-[#EDEDED] transition-colors">
+             <button onClick={() => setRevealedKey(null)} className="mt-4 text-[9px] font-mono uppercase tracking-widest text-ve-muted hover:text-ve-text transition-colors">
                [ Dismiss Alert ]
              </button>
           </motion.div>
@@ -133,13 +133,13 @@ export function ApiKeysSection() {
 
       <AnimatePresence>
         {showCreateForm && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-[#000000] border border-[#333333] rounded-[4px] p-6 space-y-5">
-            <div className="text-[14px] font-medium text-[#EDEDED] tracking-tight">Initialize Configuration</div>
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="bg-ve-bg border border-ve-border rounded-[4px] p-6 space-y-5">
+            <div className="text-[14px] font-medium text-ve-text tracking-tight">Initialize Configuration</div>
             
             <div className="space-y-2">
-               <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">Alias</label>
+               <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">Alias</label>
                <input
-                 className="h-10 w-full bg-[#111111] border border-[#333333] rounded-[4px] px-3 text-[13px] text-[#EDEDED] font-mono outline-none focus:border-[#888888] transition-colors"
+                 className="h-10 w-full bg-ve-surface border border-ve-border rounded-[4px] px-3 text-[13px] text-ve-text font-mono outline-none focus:border-ve-muted transition-colors"
                  placeholder="Terminal process identifier"
                  value={newLabel}
                  onChange={(e) => setNewLabel(e.target.value)}
@@ -148,9 +148,9 @@ export function ApiKeysSection() {
             </div>
             
             <div className="space-y-2">
-               <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">Validity Window</label>
+               <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">Validity Window</label>
                <select
-                 className="h-10 w-full bg-[#111111] border border-[#333333] rounded-[4px] px-3 text-[13px] text-[#EDEDED] font-mono outline-none focus:border-[#888888] transition-colors appearance-none"
+                 className="h-10 w-full bg-ve-surface border border-ve-border rounded-[4px] px-3 text-[13px] text-ve-text font-mono outline-none focus:border-ve-muted transition-colors appearance-none"
                  value={expiryDays}
                  onChange={(e) => setExpiryDays(e.target.value)}
                >
@@ -161,12 +161,12 @@ export function ApiKeysSection() {
                </select>
             </div>
             
-            <div className="flex items-center gap-4 pt-4 border-t border-[#333333]">
-               <button onClick={handleCreate} disabled={isCreating || !newLabel.trim()} className="flex items-center gap-2 rounded-[4px] bg-[#EDEDED] text-[#000000] px-4 py-2 font-medium text-[13px] hover:bg-[#CCCCCC] transition-colors disabled:opacity-50">
+            <div className="flex items-center gap-4 pt-4 border-t border-ve-border">
+               <button onClick={handleCreate} disabled={isCreating || !newLabel.trim()} className="flex items-center gap-2 rounded-[4px] bg-ve-btn-primary text-ve-btn-text px-4 py-2 font-medium text-[13px] hover:bg-ve-btn-hover transition-colors disabled:opacity-50">
                  {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
                  {isCreating ? 'Compiling...' : 'Generate Resource'}
                </button>
-               <button onClick={() => setShowCreateForm(false)} className="text-[11px] font-mono uppercase tracking-widest text-[#888888] hover:text-[#EDEDED] transition-colors">Abort</button>
+               <button onClick={() => setShowCreateForm(false)} className="text-[11px] font-mono uppercase tracking-widest text-ve-muted hover:text-ve-text transition-colors">Abort</button>
             </div>
           </motion.div>
         )}
@@ -174,42 +174,42 @@ export function ApiKeysSection() {
 
       <div className="space-y-3">
         {keys.length === 0 ? (
-          <div className="border border-dashed border-[#333333] rounded-[4px] py-20 text-center bg-[#111111]">
-            <Server className="h-8 w-8 mx-auto mb-4 text-[#333333]" />
-            <p className="text-[11px] font-mono text-[#888888] uppercase tracking-widest">Null Output Array</p>
-            <p className="text-[12px] font-mono text-[#555555] mt-2">Initialize access tokens for automated systems integration.</p>
+          <div className="border border-dashed border-ve-border rounded-[4px] py-20 text-center bg-ve-surface">
+            <Server className="h-8 w-8 mx-auto mb-4 text-ve-border" />
+            <p className="text-[11px] font-mono text-ve-muted uppercase tracking-widest">Null Output Array</p>
+            <p className="text-[12px] font-mono text-ve-dimmed mt-2">Initialize access tokens for automated systems integration.</p>
           </div>
         ) : (
           keys.map((k) => (
-            <div key={k.id} className="bg-[#000000] border border-[#333333] rounded-[4px] px-6 py-5 flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row hover:border-[#888888] transition-colors">
+            <div key={k.id} className="bg-ve-bg border border-ve-border rounded-[4px] px-6 py-5 flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row hover:border-ve-muted transition-colors">
               
               <div className="flex items-center gap-4 flex-1 min-w-0">
-                 <div className="h-10 w-10 rounded-[4px] bg-[#111111] border border-[#333333] flex items-center justify-center shrink-0">
-                   <Key className="h-4 w-4 text-[#888888]" />
+                 <div className="h-10 w-10 rounded-[4px] bg-ve-surface border border-ve-border flex items-center justify-center shrink-0">
+                   <Key className="h-4 w-4 text-ve-muted" />
                  </div>
                  <div className="min-w-0">
                     <div className="flex items-center gap-3 mb-1.5">
-                       <span className="text-[14px] font-semibold text-[#EDEDED] truncate tracking-tight">{k.label}</span>
+                       <span className="text-[14px] font-semibold text-ve-text truncate tracking-tight">{k.label}</span>
                        {k.is_active ? (
-                         <span className="px-1.5 py-0.5 rounded-[2px] bg-[#111111] border border-[#333333] text-[#EDEDED] text-[9px] font-mono uppercase tracking-widest">Active</span>
+                         <span className="px-1.5 py-0.5 rounded-[2px] bg-ve-surface border border-ve-border text-ve-text text-[9px] font-mono uppercase tracking-widest">Active</span>
                        ) : (
-                         <span className="px-1.5 py-0.5 rounded-[2px] bg-[#2A0808] border border-[#5C1A1A] text-[#FF4444] text-[9px] font-mono uppercase tracking-widest">Revoked</span>
+                         <span className="px-1.5 py-0.5 rounded-[2px] bg-ve-error-bg border border-ve-error-border text-ve-error text-[9px] font-mono uppercase tracking-widest">Revoked</span>
                        )}
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap text-[10px] font-mono text-[#888888] uppercase tracking-wider">
-                       <span className="text-[#EDEDED]">{k.key_prefix}••••••••</span>
-                       <span className="hidden sm:inline-block h-3 w-px bg-[#333333]" />
+                    <div className="flex items-center gap-3 flex-wrap text-[10px] font-mono text-ve-muted uppercase tracking-wider">
+                       <span className="text-ve-text">{k.key_prefix}••••••••</span>
+                       <span className="hidden sm:inline-block h-3 w-px bg-ve-border" />
                        <span>{new Date(k.created_at).toLocaleDateString()}</span>
                        {k.expires_at && (
                          <>
-                           <span className="hidden sm:inline-block h-3 w-px bg-[#333333]" />
-                           <span className="text-[#FF4444]">T-{new Date(k.expires_at).toLocaleDateString()}</span>
+                           <span className="hidden sm:inline-block h-3 w-px bg-ve-border" />
+                           <span className="text-ve-error">T-{new Date(k.expires_at).toLocaleDateString()}</span>
                          </>
                        )}
                        {k.last_used_at && (
                          <>
-                           <span className="hidden sm:inline-block h-3 w-px bg-[#333333]" />
-                           <span className="text-[#0070F3]">Ping: {new Date(k.last_used_at).toLocaleDateString()}</span>
+                           <span className="hidden sm:inline-block h-3 w-px bg-ve-border" />
+                           <span className="text-ve-blue">Ping: {new Date(k.last_used_at).toLocaleDateString()}</span>
                          </>
                        )}
                     </div>
@@ -218,7 +218,7 @@ export function ApiKeysSection() {
               
               <button
                  onClick={() => handleRevoke(k.id)}
-                 className="h-8 w-8 rounded-[4px] flex items-center justify-center text-[#888888] hover:text-[#FF4444] border border-transparent hover:border-[#FF4444] hover:bg-[#2A0808] transition-all shrink-0"
+                 className="h-8 w-8 rounded-[4px] flex items-center justify-center text-ve-muted hover:text-ve-error border border-transparent hover:border-ve-error hover:bg-ve-error-bg transition-all shrink-0"
                  title="Force Revoke"
               >
                  <Trash2 className="h-3.5 w-3.5" />

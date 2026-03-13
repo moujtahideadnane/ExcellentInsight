@@ -13,9 +13,9 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen w-full flex relative overflow-hidden bg-[#000000]">
+    <div className="min-h-screen w-full flex relative overflow-hidden bg-ve-bg">
       {/* Left panel | branding */}
-      <div className="hidden lg:flex max-w-[480px] w-full flex-col justify-between p-12 relative overflow-hidden border-r border-[#333333] bg-[#111111]">
+      <div className="hidden lg:flex max-w-[480px] w-full flex-col justify-between p-12 relative overflow-hidden border-r border-ve-border bg-ve-surface">
         
         {/* Vercel Edge subtle grid background instead of glowing orbs */}
         <div className="absolute inset-0 pointer-events-none opacity-20"
@@ -24,10 +24,10 @@ export default function AuthLayout({
         {/* Logo */}
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-3 decoration-0 group">
-            <div className="h-8 w-8 relative rounded-[4px] flex items-center justify-center bg-[#EDEDED] group-hover:bg-[#FFFFFF] transition-colors overflow-hidden">
+            <div className="h-8 w-8 relative rounded-[4px] flex items-center justify-center bg-ve-btn-primary group-hover:bg-ve-accent transition-colors overflow-hidden">
                <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-1" />
             </div>
-            <span className="font-semibold text-[16px] tracking-tight text-[#EDEDED] group-hover:text-[#FFFFFF]">
+            <span className="font-semibold text-[16px] tracking-tight text-ve-text group-hover:text-ve-accent">
               ExcellentInsight
             </span>
           </Link>
@@ -36,15 +36,15 @@ export default function AuthLayout({
         {/* Central message */}
         <div className="relative z-10">
           <div className="mb-12">
-            <div className="inline-flex items-center gap-2 px-2 py-1 rounded-[4px] bg-[#000000] border border-[#333333] mb-6">
-              <Terminal className="h-3 w-3 text-[#888888]" />
-              <span className="text-[10px] font-mono text-[#888888]">v1.0.0-beta</span>
+            <div className="inline-flex items-center gap-2 px-2 py-1 rounded-[4px] bg-ve-bg border border-ve-border mb-6">
+              <Terminal className="h-3 w-3 text-ve-muted" />
+              <span className="text-[10px] font-mono text-ve-muted">v1.0.0-beta</span>
             </div>
-            <h2 className="text-[40px] font-bold text-[#EDEDED] leading-[1.1] tracking-tighter mb-4">
+            <h2 className="text-[40px] font-bold text-ve-text leading-[1.1] tracking-tighter mb-4">
               Access the <br />
-              <span className="text-[#888888]">intelligence engine.</span>
+              <span className="text-ve-muted">intelligence engine.</span>
             </h2>
-            <p className="text-[14px] leading-relaxed text-[#888888] max-w-sm">
+            <p className="text-[14px] leading-relaxed text-ve-muted max-w-sm">
               Authenticate to deploy, manage, and scale your data analysis pipelines securely.
             </p>
           </div>
@@ -61,10 +61,10 @@ export default function AuthLayout({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + (i * 0.1) }}
-                className="flex items-center gap-3 text-[#888888] text-[13px] font-medium"
+                className="flex items-center gap-3 text-ve-muted text-[13px] font-medium"
               >
-                <div className="h-5 w-5 rounded-[4px] border border-[#333333] bg-[#000000] flex items-center justify-center shrink-0">
-                  <item.icon className="h-3 w-3 text-[#EDEDED]" />
+                <div className="h-5 w-5 rounded-[4px] border border-ve-border bg-ve-bg flex items-center justify-center shrink-0">
+                  <item.icon className="h-3 w-3 text-ve-text" />
                 </div>
                 {item.text}
               </motion.div>
@@ -72,32 +72,32 @@ export default function AuthLayout({
           </div>
 
           {/* Testimonial mini - Minimalist */}
-          <div className="p-4 rounded-[6px] bg-[#000000] border border-[#333333]">
-            <p className="text-[12px] text-[#888888] leading-relaxed mb-3">
+          <div className="p-4 rounded-[6px] bg-ve-bg border border-ve-border">
+            <p className="text-[12px] text-ve-muted leading-relaxed mb-3">
               &quot;The latency from raw CSV drop to a queryable GraphQL endpoint with live charts is essentially zero. It&apos;s the standard.&quot;
             </p>
             <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-[2px] bg-[#333333]" />
-              <span className="text-[10px] font-mono text-[#888888] uppercase tracking-wider">Enterprise Customer</span>
+              <div className="h-6 w-6 rounded-[2px] bg-ve-border" />
+              <span className="text-[10px] font-mono text-ve-muted uppercase tracking-wider">Enterprise Customer</span>
             </div>
           </div>
         </div>
 
         {/* Bottom */}
-        <div className="relative z-10 text-[10px] font-mono uppercase tracking-widest text-[#333333]">
+        <div className="relative z-10 text-[10px] font-mono uppercase tracking-widest text-ve-border">
            REGION: GLOBAL_EDGE | LATENCY: {'<'}50ms
         </div>
       </div>
 
       {/* Right panel | form content */}
-      <div className="flex-1 flex flex-col relative bg-[#000000]">
+      <div className="flex-1 flex flex-col relative bg-ve-bg">
         {/* Mobile Header */}
-        <div className="lg:hidden p-6 flex justify-between items-center border-b border-[#333333]">
+        <div className="lg:hidden p-6 flex justify-between items-center border-b border-ve-border">
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-6 w-6 relative rounded-[4px] bg-[#EDEDED] flex items-center justify-center overflow-hidden">
+            <div className="h-6 w-6 relative rounded-[4px] bg-ve-btn-primary flex items-center justify-center overflow-hidden">
               <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-0.5" />
             </div>
-            <span className="font-semibold text-[14px] text-[#EDEDED] tracking-tight">ExcellentInsight</span>
+            <span className="font-semibold text-[14px] text-ve-text tracking-tight">ExcellentInsight</span>
           </Link>
         </div>
 

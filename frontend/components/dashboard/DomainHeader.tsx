@@ -41,19 +41,19 @@ export default function DomainHeader({ domain, summary, sheetCount, totalRows, l
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[6px] overflow-hidden mb-8 border border-[#333333] bg-[#000000]"
+      className="rounded-[6px] overflow-hidden mb-8 border border-ve-border bg-ve-bg"
     >
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-[#EDEDED] via-[#888888] to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-ve-text via-ve-muted to-transparent" />
 
       <div className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-[4px] flex items-center justify-center text-2xl shrink-0 bg-[#111111] border border-[#333333]">
+            <div className="h-12 w-12 rounded-[4px] flex items-center justify-center text-2xl shrink-0 bg-ve-surface border border-ve-border">
               {emoji}
             </div>
             <div>
-              <div className="text-[10px] font-mono uppercase tracking-widest text-[#888888] mb-1">Context Analysis</div>
-              <h2 className="text-[20px] font-semibold tracking-tight text-[#EDEDED]">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-ve-muted mb-1">Context Analysis</div>
+              <h2 className="text-[20px] font-semibold tracking-tight text-ve-text">
                 {domain}
               </h2>
             </div>
@@ -74,9 +74,9 @@ export default function DomainHeader({ domain, summary, sheetCount, totalRows, l
         </div>
 
         {summary && (
-          <div className="mt-6 pt-5 border-t border-[#222222]">
-            <p className="text-[13px] leading-relaxed text-[#888888] font-mono">
-              <span className="text-[#EDEDED] font-semibold mr-2">{'>'}</span>{summary}
+          <div className="mt-6 pt-5 border-t border-ve-border-subtle">
+            <p className="text-[13px] leading-relaxed text-ve-muted font-mono">
+              <span className="text-ve-text font-semibold mr-2">{'>'}</span>{summary}
             </p>
           </div>
         )}
@@ -91,8 +91,8 @@ function StatChip({ icon, label, value, accent = false }: { icon: React.ReactNod
       className={cn(
         "inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] border transition-colors",
         accent 
-          ? "bg-[#111111] border-[#EDEDED] text-[#EDEDED]" 
-          : "bg-[#000000] border-[#333333] text-[#888888]"
+          ? "bg-ve-surface border-ve-text text-ve-text" 
+          : "bg-ve-bg border-ve-border text-ve-muted"
       )}
     >
       <span>{icon}</span>

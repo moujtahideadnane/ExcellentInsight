@@ -4,6 +4,7 @@ import React from "react";
 import { Toaster } from "sonner";
 import { Geist, Geist_Mono } from "next/font/google";
 import CursorIntelligence from "@/components/design-system/CursorIntelligence";
+import ErrorBoundary from "@/components/ErrorBoundary"; // REFACTOR: [global-error-boundary]
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -72,22 +73,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <head />
-      {/* Vercel Edge baseline: Pure black bg, off-white text, specific selection color */}
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-[#EDEDED] selection:bg-[#0070F3] selection:text-white`}>
+      {/* REFACTOR: [consolidate-hex] — body uses CSS var tokens */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--bg)] text-[var(--text)] selection:bg-[var(--accent-blue)] selection:text-white`}>
         <CursorIntelligence />
-        <QueryProvider>
-          {children}
-        </QueryProvider>
+        <ErrorBoundary>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+        </ErrorBoundary>
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: "#111111", /* Elevated surface */
-              border: "1px solid #333333", /* Hairline border */
-              color: "#EDEDED",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
               fontFamily: "var(--font-sans)",
               fontWeight: "500",
-              borderRadius: "6px", /* Sharp/subtle radius */
+              borderRadius: "var(--radius)",
               boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
             },
           }}

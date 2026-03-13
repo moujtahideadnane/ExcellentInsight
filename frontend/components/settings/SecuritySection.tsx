@@ -27,7 +27,7 @@ export function SecuritySection() {
   })()
 
   const strengthLabel = ['', 'CRITICAL', 'WEAK', 'MODERATE', 'ACCEPTABLE', 'SECURE'][strength]
-  const strengthColor = ['', 'bg-[#FF4444]', 'bg-[#F5A623]', 'bg-[#F5A623]', 'bg-[#EDEDED]', 'bg-[#0070F3]'][strength]
+  const strengthColor = ['', 'bg-ve-error', 'bg-ve-warning', 'bg-ve-warning', 'bg-ve-text', 'bg-ve-blue'][strength] // REFACTOR: [consolidate-hex]
 
   const handleChange = async () => {
     if (next !== confirm) { toast.error('Hashes do not match'); return }
@@ -47,34 +47,34 @@ export function SecuritySection() {
   return (
     <div className="space-y-6">
       <SectionHeader title="Access Security" subtitle="Manage your access control list and cryptographic proofs." />
-      <div className="bg-[#000000] border border-[#333333] rounded-[4px] p-6 lg:p-8 space-y-6">
+      <div className="bg-ve-bg border border-ve-border rounded-[4px] p-6 lg:p-8 space-y-6">
         <div className="space-y-2">
-          <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">Current Hash</label>
+          <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">Current Hash</label>
           <div className="relative">
             <input
               type={showCurrent ? 'text' : 'password'}
-              className="h-10 w-full bg-[#111111] border border-[#333333] rounded-[4px] px-3 pr-10 text-[13px] text-[#EDEDED] font-mono outline-none focus:border-[#888888] transition-colors"
+              className="h-10 w-full bg-ve-surface border border-ve-border rounded-[4px] px-3 pr-10 text-[13px] text-ve-text font-mono outline-none focus:border-ve-muted transition-colors"
               value={current}
               onChange={(e) => setCurrent(e.target.value)}
               placeholder="••••••••"
             />
-            <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#EDEDED]">
+            <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ve-muted hover:text-ve-text">
               {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">New Hash Directive</label>
+          <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">New Hash Directive</label>
           <div className="relative">
              <input
               type={showNext ? 'text' : 'password'}
-              className="h-10 w-full bg-[#111111] border border-[#333333] rounded-[4px] px-3 pr-10 text-[13px] text-[#EDEDED] font-mono outline-none focus:border-[#888888] transition-colors"
+              className="h-10 w-full bg-ve-surface border border-ve-border rounded-[4px] px-3 pr-10 text-[13px] text-ve-text font-mono outline-none focus:border-ve-muted transition-colors"
               value={next}
               onChange={(e) => setNext(e.target.value)}
               placeholder="Minimum 8 bytes"
             />
-            <button type="button" onClick={() => setShowNext(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#EDEDED]">
+            <button type="button" onClick={() => setShowNext(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ve-muted hover:text-ve-text">
               {showNext ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
@@ -82,35 +82,35 @@ export function SecuritySection() {
             <div className="space-y-1.5 pt-2">
               <div className="flex gap-1 h-0.5">
                 {[1,2,3,4,5].map(i => (
-                  <div key={i} className={cn("flex-1 transition-colors duration-300", i <= strength ? strengthColor : 'bg-[#333333]')} />
+                  <div key={i} className={cn("flex-1 transition-colors duration-300", i <= strength ? strengthColor : 'bg-ve-border')} />
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-[#888888] uppercase tracking-widest">Entropy Level: {strengthLabel}</p>
+              <p className="text-[9px] font-mono text-ve-muted uppercase tracking-widest">Entropy Level: {strengthLabel}</p>
             </div>
           )}
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">Verify New Directive</label>
+          <label className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">Verify New Directive</label>
           <input
             type="password"
-            className={cn("h-10 w-full bg-[#111111] border rounded-[4px] px-3 pr-10 text-[13px] text-[#EDEDED] font-mono outline-none transition-colors", confirm && next !== confirm ? "border-[#FF4444]" : "border-[#333333] focus:border-[#888888]")}
+            className={cn("h-10 w-full bg-ve-surface border rounded-[4px] px-3 pr-10 text-[13px] text-ve-text font-mono outline-none transition-colors", confirm && next !== confirm ? "border-ve-error" : "border-ve-border focus:border-ve-muted")}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Re-enter configuration"
           />
           {confirm && next !== confirm && (
-            <p className="text-[9px] font-mono text-[#FF4444] uppercase tracking-widest flex items-center gap-1.5 mt-2">
+            <p className="text-[9px] font-mono text-ve-error uppercase tracking-widest flex items-center gap-1.5 mt-2">
               <AlertTriangle className="h-3 w-3" /> Integrity mismatch
             </p>
           )}
         </div>
 
-        <div className="pt-4 flex justify-end border-t border-[#333333]">
+        <div className="pt-4 flex justify-end border-t border-ve-border">
           <button
              onClick={handleChange}
              disabled={isSaving || !current || !next || !confirm}
-             className="flex items-center gap-2 px-6 py-2 rounded-[4px] bg-[#EDEDED] text-[#000000] font-medium text-[13px] disabled:opacity-50 hover:bg-[#CCCCCC] transition-colors"
+             className="flex items-center gap-2 px-6 py-2 rounded-[4px] bg-ve-btn-primary text-ve-btn-text font-medium text-[13px] disabled:opacity-50 hover:bg-ve-btn-hover transition-colors"
           >
              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
              {isSaving ? 'Encrypting...' : 'Update Proof'}

@@ -37,14 +37,14 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
       <div className="mb-10 text-left">
         <div className={cn(
           "text-[10px] font-mono px-2 py-1 rounded-[2px] mb-4 mx-auto w-fit uppercase tracking-widest border",
-          isFailed ? "bg-[#2A0808] text-[#FF4444] border-[#5C1A1A]" : 
-          isDone ? "bg-[#111111] text-[#0070F3] border-[#0070F3]/30" : 
-          isCancelled ? "bg-[#291704] text-[#F5A623] border-[#F5A623]/30" : 
-          "bg-[#111111] text-[#EDEDED] border-[#333333]"
+          isFailed ? "bg-ve-error-bg text-ve-error border-ve-error-border" : 
+          isDone ? "bg-ve-surface text-ve-blue border-ve-blue-border" : 
+          isCancelled ? "bg-amber-950 text-ve-warning border-amber-600/30" : 
+          "bg-ve-surface text-ve-text border-ve-border"
         )}>
           {isFailed ? 'Exception' : isDone ? 'Compiled' : isCancelled ? 'Halted' : 'Executing'}
         </div>
-        <h2 className="text-[24px] font-semibold tracking-tight text-[#EDEDED] mb-3">
+        <h2 className="text-[24px] font-semibold tracking-tight text-ve-text mb-3">
           {isFailed ? 'Process Terminated.' : isDone ? 'System Online.' : isCancelled ? 'Execution Stopped.' : 'Processing Buffer...'}
         </h2>
         
@@ -52,7 +52,7 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
           <div className="space-y-6">
             <div className={cn(
                "max-w-md mx-auto p-4 rounded-[4px] border text-[12px] font-mono",
-               isCancelled ? "bg-[#291704] border-[#F5A623]/30 text-[#F5A623]" : "bg-[#2A0808] border-[#5C1A1A] text-[#FF4444]"
+               isCancelled ? "bg-amber-950 border-amber-600/30 text-ve-warning" : "bg-ve-error-bg border-ve-error-border text-ve-error"
             )}>
               {data?.message || (isCancelled ? "Process interrupted by user instruction." : "Unhandled exception caught during runtime.")}
             </div>
@@ -61,20 +61,20 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
                 clearActiveJob()
                 router.push('/dashboard')
               }}
-              className="px-6 py-2 rounded-[4px] bg-[#EDEDED] text-[#000000] font-medium text-[13px] hover:bg-[#CCCCCC] transition-colors"
+              className="px-6 py-2 rounded-[4px] bg-ve-btn-primary text-ve-btn-text font-medium text-[13px] hover:bg-ve-btn-hover transition-colors"
             >
               Initialize New Context
             </button>
           </div>
         ) : (
           <div className="space-y-6">
-            <p className="max-w-md mx-auto text-[13px] text-[#888888] font-mono">
+            <p className="max-w-md mx-auto text-[13px] text-ve-muted font-mono">
               {data?.message || "Awaiting initialization..."}
             </p>
             {onStop && (
               <button
                 onClick={onStop}
-                className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-[#888888] border border-[#333333] hover:border-[#FF4444] hover:text-[#FF4444] rounded-[4px] transition-colors flex items-center gap-2 mx-auto"
+                className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-ve-muted border border-ve-border hover:border-ve-error hover:text-ve-error rounded-[4px] transition-colors flex items-center gap-2 mx-auto"
               >
                 ^C Interrupt
               </button>
@@ -86,14 +86,14 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
       {/* Progress bar */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#888888]">Allocated Cache</span>
-          <span className="text-[12px] font-mono text-[#0070F3]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">Allocated Cache</span>
+          <span className="text-[12px] font-mono text-ve-blue">
             {progress}%
           </span>
         </div>
-        <div className="h-1 w-full bg-[#333333] overflow-hidden">
+        <div className="h-1 w-full bg-ve-border overflow-hidden">
           <motion.div
-            className="h-full bg-[#0070F3]"
+            className="h-full bg-ve-blue"
             initial={{ width: '0%' }}
             animate={{ width: `${progress}%` }}
             transition={{ type: 'spring', stiffness: 50, damping: 20 }}
@@ -116,8 +116,8 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
               transition={{ delay: index * 0.05 }}
               className={cn(
                 "flex items-center gap-4 px-4 py-3 border border-l-2 transition-all",
-                isActive ? "border-[#333333] border-l-[#0070F3] bg-[#111111]" : "border-transparent border-l-transparent bg-[#000000]",
-                isCompleted && "border-l-[#333333]"
+                isActive ? "border-ve-border border-l-ve-blue bg-ve-surface" : "border-transparent border-l-transparent bg-ve-bg",
+                isCompleted && "border-l-ve-border"
               )}
               style={{
                 opacity: isPending ? 0.4 : 1
@@ -126,25 +126,25 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
               {/* Step indicator */}
               <div className="h-6 w-6 flex items-center justify-center shrink-0">
                 {isCompleted ? (
-                  <Check className="h-4 w-4 text-[#888888]" />
+                  <Check className="h-4 w-4 text-ve-muted" />
                 ) : isActive ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-[#0070F3]" />
+                  <Loader2 className="h-4 w-4 animate-spin text-ve-blue" />
                 ) : (
-                  <div className="h-[4px] w-[4px] bg-[#333333]" />
+                  <div className="h-[4px] w-[4px] bg-ve-border" />
                 )}
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className={cn("text-[13px] font-medium tracking-tight", (isCompleted || isActive) ? "text-[#EDEDED]" : "text-[#888888]")}>
+                <div className={cn("text-[13px] font-medium tracking-tight", (isCompleted || isActive) ? "text-ve-text" : "text-ve-muted")}>
                   {step.label}
                 </div>
-                <div className="text-[11px] font-mono text-[#888888] mt-0.5">
+                <div className="text-[11px] font-mono text-ve-muted mt-0.5">
                   {step.desc}
                 </div>
               </div>
 
               {isActive && (
-                <div className="px-2 py-0.5 rounded-[2px] bg-[#111111] border border-[#333333] text-[9px] font-mono text-[#0070F3] uppercase tracking-widest animate-pulse">
+                <div className="px-2 py-0.5 rounded-[2px] bg-ve-surface border border-ve-border text-[9px] font-mono text-ve-blue uppercase tracking-widest animate-pulse">
                   ACTIVE
                 </div>
               )}

@@ -63,13 +63,13 @@ export default function JobsPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 border-b border-[#333333] pb-8"
+        className="mb-8 border-b border-ve-border pb-8"
       >
-        <div className="text-[10px] font-mono text-[#888888] uppercase tracking-widest mb-2">Resource Allocation Directory</div>
-        <h1 className="text-[32px] font-semibold text-[#EDEDED] tracking-tight leading-tight">
-          System <span className="text-[#888888]">Deployments</span>
+        <div className="text-[10px] font-mono text-ve-muted uppercase tracking-widest mb-2">Resource Allocation Directory</div>
+        <h1 className="text-[32px] font-semibold text-ve-text tracking-tight leading-tight">
+          System <span className="text-ve-muted">Deployments</span>
         </h1>
-        <p className="mt-3 text-[14px] text-[#888888] font-mono max-w-lg">
+        <p className="mt-3 text-[14px] text-ve-muted font-mono max-w-lg">
           Query the execution history of previously deployed analytical nodes.
         </p>
       </motion.div>
@@ -77,16 +77,16 @@ export default function JobsPage() {
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center py-32 gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-[#0070F3]" />
-          <span className="font-mono text-[#888888] text-[11px] uppercase tracking-widest">Querying database...</span>
+          <Loader2 className="h-5 w-5 animate-spin text-ve-blue" />
+          <span className="font-mono text-ve-muted text-[11px] uppercase tracking-widest">Querying database...</span>
         </div>
       )}
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-[4px] mb-6 bg-[#2A0808] border border-[#5C1A1A]">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-[#FF4444]" />
-          <p className="text-[#FF4444] text-[12px] font-mono">{error}</p>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-[4px] mb-6 bg-ve-error-bg border border-ve-error-border">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-ve-error" />
+          <p className="text-ve-error text-[12px] font-mono">{error}</p>
         </div>
       )}
 
@@ -95,13 +95,13 @@ export default function JobsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-32 text-center border border-dashed border-[#333333] rounded-[6px] bg-[#111111]"
+          className="flex flex-col items-center justify-center py-32 text-center border border-dashed border-ve-border rounded-[6px] bg-ve-surface"
         >
           <div className="h-12 w-12 flex items-center justify-center mb-4">
-            <Server className="h-6 w-6 text-[#333333]" />
+            <Server className="h-6 w-6 text-ve-border" />
           </div>
-          <h3 className="text-[14px] font-semibold tracking-tight text-[#EDEDED] mb-2">Log Directory Empty</h3>
-          <p className="mb-6 max-w-sm text-[#888888] font-mono text-[11px] leading-relaxed">
+          <h3 className="text-[14px] font-semibold tracking-tight text-ve-text mb-2">Log Directory Empty</h3>
+          <p className="mb-6 max-w-sm text-ve-muted font-mono text-[11px] leading-relaxed">
             There are no documented deployments in this workspace. Initialize a deployment to start capturing analytical outputs.
           </p>
           <button
@@ -109,7 +109,7 @@ export default function JobsPage() {
               clearActiveJob()
               router.push('/dashboard')
             }}
-            className="flex items-center gap-2 rounded-[4px] bg-[#EDEDED] text-[#000000] px-4 py-2 font-medium text-[12px] hover:bg-[#CCCCCC] transition-colors"
+            className="flex items-center gap-2 rounded-[4px] bg-ve-btn-primary text-ve-btn-text px-4 py-2 font-medium text-[12px] hover:bg-ve-btn-hover transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
             Initialize Run
@@ -135,24 +135,24 @@ export default function JobsPage() {
                 transition={{ delay: i * 0.04 }}
                 onClick={() => isClickable && router.push(`/dashboard/${job.id}`)}
                 className={cn(
-                  "group flex items-center justify-between p-4 rounded-[4px] transition-all bg-[#000000] border border-[#333333]",
-                  isClickable ? "cursor-pointer hover:border-[#888888]" : "opacity-70 grayscale"
+                  "group flex items-center justify-between p-4 rounded-[4px] transition-all bg-ve-bg border border-ve-border",
+                  isClickable ? "cursor-pointer hover:border-ve-muted" : "opacity-70 grayscale"
                 )}
               >
                 <div className="flex items-center gap-4 min-w-0">
-                  <div className="h-8 w-8 rounded-[4px] bg-[#111111] border border-[#333333] flex items-center justify-center group-hover:bg-[#EDEDED] group-hover:border-[#EDEDED] transition-colors shrink-0">
-                    <FileText className="h-4 w-4 text-[#888888] group-hover:text-[#000000] transition-colors" />
+                  <div className="h-8 w-8 rounded-[4px] bg-ve-surface border border-ve-border flex items-center justify-center group-hover:bg-ve-text group-hover:border-ve-text transition-colors shrink-0">
+                    <FileText className="h-4 w-4 text-ve-muted group-hover:text-ve-bg transition-colors" />
                   </div>
                   
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="text-[13px] font-medium text-[#EDEDED] tracking-tight truncate">
+                      <span className="text-[13px] font-medium text-ve-text tracking-tight truncate">
                          {displayName}
                       </span>
                       {sizeStr && (
                         <>
-                          <div className="h-px w-3 bg-[#333333]" />
-                          <span className="text-[10px] font-mono text-[#888888] uppercase tracking-widest">
+                          <div className="h-px w-3 bg-ve-border" />
+                          <span className="text-[10px] font-mono text-ve-muted uppercase tracking-widest">
                             {sizeStr}
                           </span>
                         </>
@@ -160,14 +160,14 @@ export default function JobsPage() {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-mono text-[#888888] flex items-center gap-1.5 uppercase tracking-wider">
+                      <span className="text-[10px] font-mono text-ve-muted flex items-center gap-1.5 uppercase tracking-wider">
                          <Clock className="h-3 w-3" />
                          {new Date(job.created_at).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                       {domain && (
                         <>
-                           <div className="h-px w-3 bg-[#333333]" />
-                           <span className="text-[9px] font-mono text-[#0070F3] uppercase tracking-widest">{domain} schema</span>
+                           <div className="h-px w-3 bg-ve-border" />
+                           <span className="text-[9px] font-mono text-ve-blue uppercase tracking-widest">{domain} schema</span>
                         </>
                       )}
                     </div>
@@ -182,7 +182,7 @@ export default function JobsPage() {
                       {sc.label}
                    </div>
                    {isClickable && (
-                     <ArrowRight className="h-4 w-4 text-[#333333] group-hover:text-[#EDEDED] group-hover:translate-x-1 transition-all" />
+                     <ArrowRight className="h-4 w-4 text-ve-border group-hover:text-ve-text group-hover:translate-x-1 transition-all" />
                    )}
                 </div>
               </motion.div>

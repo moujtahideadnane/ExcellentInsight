@@ -85,33 +85,33 @@ export default function DashboardDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 pb-32 w-full bg-[#000000]">
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 pb-32 w-full bg-ve-bg"> {/* REFACTOR: [consolidate-hex] */}
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Header Skeleton */}
-          <div className="pb-8 border-b border-[#333333] space-y-6">
+          <div className="pb-8 border-b border-ve-border space-y-6">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-20 bg-[#111111] rounded-[2px]" />
-              <div className="h-3 w-24 bg-[#111111] rounded-[2px]" />
+              <div className="h-3 w-20 bg-ve-surface rounded-[2px]" />
+              <div className="h-3 w-24 bg-ve-surface rounded-[2px]" />
             </div>
-            <div className="h-10 w-64 bg-[#111111] rounded-[4px]" />
+            <div className="h-10 w-64 bg-ve-surface rounded-[4px]" />
             <div className="flex gap-4">
-              <div className="h-4 w-32 bg-[#111111] rounded-[2px]" />
-              <div className="h-4 w-32 bg-[#111111] rounded-[2px]" />
+              <div className="h-4 w-32 bg-ve-surface rounded-[2px]" />
+              <div className="h-4 w-32 bg-ve-surface rounded-[2px]" />
             </div>
           </div>
 
           {/* Domain Header Skeleton */}
-          <div className="p-6 rounded-[6px] bg-[#0A0A0A] border border-[#333333] space-y-4">
-            <div className="h-6 w-48 bg-[#111111] rounded-[2px]" />
-            <div className="h-4 w-full bg-[#111111] rounded-[2px]" />
-            <div className="h-4 w-2/3 bg-[#111111] rounded-[2px]" />
+          <div className="p-6 rounded-[6px] bg-ve-skeleton border border-ve-border space-y-4">
+            <div className="h-6 w-48 bg-ve-surface rounded-[2px]" />
+            <div className="h-4 w-full bg-ve-surface rounded-[2px]" />
+            <div className="h-4 w-2/3 bg-ve-surface rounded-[2px]" />
           </div>
 
           {/* KPIs Skeleton */}
           <section>
             <div className="flex items-center gap-4 mb-6">
-              <div className="h-3 w-24 bg-[#111111] rounded-[2px]" />
-              <div className="flex-1 h-px bg-[#333333]" />
+              <div className="h-3 w-24 bg-ve-surface rounded-[2px]" />
+              <div className="flex-1 h-px bg-ve-border" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => <SkeletonKPICard key={i} />)}
@@ -121,13 +121,13 @@ export default function DashboardDetailPage() {
           {/* Charts Skeleton */}
           <section className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="h-3 w-32 bg-[#111111] rounded-[2px]" />
-              <div className="flex-1 h-px bg-[#333333]" />
+              <div className="h-3 w-32 bg-ve-surface rounded-[2px]" />
+              <div className="flex-1 h-px bg-ve-border" />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="lg:col-span-2 h-[480px] bg-[#0A0A0A] border border-[#333333] rounded-[6px]" />
-              <div className="h-[420px] bg-[#0A0A0A] border border-[#333333] rounded-[6px]" />
-              <div className="h-[420px] bg-[#0A0A0A] border border-[#333333] rounded-[6px]" />
+              <div className="lg:col-span-2 h-[480px] bg-ve-skeleton border border-ve-border rounded-[6px]" />
+              <div className="h-[420px] bg-ve-skeleton border border-ve-border rounded-[6px]" />
+              <div className="h-[420px] bg-ve-skeleton border border-ve-border rounded-[6px]" />
             </div>
           </section>
         </div>
@@ -137,20 +137,20 @@ export default function DashboardDetailPage() {
 
   if (error) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center gap-6 p-20 min-h-[70vh] bg-[#000000]">
-        <div className="h-12 w-12 rounded-[4px] flex items-center justify-center bg-[#2A0808] border border-[#5C1A1A]">
-          <FileText className="h-5 w-5 text-[#FF4444]" />
+      <div className="h-full flex flex-col items-center justify-center text-center gap-6 p-20 min-h-[70vh] bg-ve-bg">
+        <div className="h-12 w-12 rounded-[4px] flex items-center justify-center bg-ve-error-bg border border-ve-error-border">
+          <FileText className="h-5 w-5 text-ve-error" />
         </div>
         <div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-[#EDEDED] mb-2 font-mono">ERR_NOT_FOUND: {error}</h2>
-          <p className="text-[#888888] font-mono text-[12px] max-w-sm">Deployment configuration missing or unavailable.</p>
+          <h2 className="text-[20px] font-semibold tracking-tight text-ve-text mb-2 font-mono">ERR_NOT_FOUND: {error}</h2>
+          <p className="text-ve-muted font-mono text-[12px] max-w-sm">Deployment configuration missing or unavailable.</p>
         </div>
         <button
           onClick={() => {
             clearActiveJob()
             router.push('/dashboard')
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#EDEDED] text-[#000000] text-[12px] font-medium rounded-[4px] hover:bg-[#CCCCCC] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-ve-btn-primary text-ve-btn-text text-[12px] font-medium rounded-[4px] hover:bg-ve-btn-hover transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Return
@@ -162,7 +162,7 @@ export default function DashboardDetailPage() {
   if (!data) return null
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 pb-32 w-full bg-[#000000]">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 pb-32 w-full bg-ve-bg">
       <div className="max-w-7xl mx-auto space-y-12">
 
         {/* ── Page Header ─────────────────────────────── */}
@@ -180,8 +180,8 @@ export default function DashboardDetailPage() {
         {/* ── Metrics ─────────────────────────────────── */}
         <section>
           <div className="flex items-center gap-4 mb-6">
-            <h2 className="text-[10px] font-mono uppercase tracking-widest text-[#888888] whitespace-nowrap">Node Outputs</h2>
-            <div className="flex-1 h-px bg-[#333333]" />
+            <h2 className="text-[10px] font-mono uppercase tracking-widest text-ve-muted whitespace-nowrap">Node Outputs</h2>
+            <div className="flex-1 h-px bg-ve-border" />
           </div>
           <KPIGrid kpis={data.kpis || []} onUpdateKPI={handleUpdateKPI} onDeleteKPI={handleDeleteKPI} />
         </section>
@@ -199,8 +199,8 @@ export default function DashboardDetailPage() {
         {data.data_preview && (
           <section className="no-print mt-12" id="data-preview-section">
             <div className="flex items-center gap-4 mb-6">
-              <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#888888] whitespace-nowrap">Source Buffer Output</h2>
-              <div className="flex-1 h-px bg-[#333333]" />
+              <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-ve-muted whitespace-nowrap">Source Buffer Output</h2>
+              <div className="flex-1 h-px bg-ve-border" />
             </div>
             <DataPreview
               data={data.data_preview}

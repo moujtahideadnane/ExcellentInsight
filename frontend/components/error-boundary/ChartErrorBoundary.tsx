@@ -44,19 +44,19 @@ export class ChartErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="h-full flex flex-col items-center justify-center gap-3 bg-[#111111] rounded-[4px] border border-dashed border-[#333333] p-8">
-          <AlertTriangle className="h-6 w-6 text-[#F5A623]" />
+        <div className="h-full flex flex-col items-center justify-center gap-3 bg-ve-surface rounded-[4px] border border-dashed border-ve-border p-8">
+          <AlertTriangle className="h-6 w-6 text-ve-warning" />
           <div className="text-center">
-            <h3 className="text-[11px] font-mono text-[#888888] uppercase tracking-widest mb-1">
+            <h3 className="text-[11px] font-mono text-ve-muted uppercase tracking-widest mb-1">
               Render Failed
             </h3>
-            <p className="text-[12px] font-mono text-[#666666]">
+            <p className="text-[12px] font-mono text-ve-dimmed">
               {this.state.error?.message || 'Unable to display chart'}
             </p>
           </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="text-[10px] font-mono text-[#0070F3] hover:text-[#EDEDED] transition-colors uppercase tracking-wider"
+            className="text-[10px] font-mono text-ve-blue hover:text-ve-text transition-colors uppercase tracking-wider"
           >
             Retry
           </button>

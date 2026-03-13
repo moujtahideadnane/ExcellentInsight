@@ -30,7 +30,7 @@ const VisxAreaChart = dynamic(() => import('@/components/charts/VisxAreaChart'),
 function ChartSkeleton() {
   return (
     <div className="h-full flex items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-[#888888]" />
+      <Loader2 className="h-6 w-6 animate-spin text-ve-muted" />
     </div>
   )
 }
@@ -51,9 +51,9 @@ export default function VisualLayer({ charts = [], onFilter }: VisualLayerProps)
   return (
     <section className="space-y-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-[10px] font-mono uppercase tracking-widest text-[#888888] whitespace-nowrap">Virtualization Layer</h2>
-        <div className="flex-1 h-px bg-[#333333]" />
-        <span className="text-[9px] font-mono text-[#888888] uppercase tracking-widest">{charts.length} Engines</span>
+        <h2 className="text-[10px] font-mono uppercase tracking-widest text-ve-muted whitespace-nowrap">Virtualization Layer</h2>
+        <div className="flex-1 h-px bg-ve-border" />
+        <span className="text-[9px] font-mono text-ve-muted uppercase tracking-widest">{charts.length} Engines</span>
       </div>
 
       {charts.length > 0 ? (
@@ -67,28 +67,28 @@ export default function VisualLayer({ charts = [], onFilter }: VisualLayerProps)
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className={cn(
-                  "bg-[#000000] border border-[#333333] rounded-[6px] overflow-hidden group hover:border-[#888888] transition-colors",
+                  "bg-ve-bg border border-ve-border rounded-[6px] overflow-hidden group hover:border-ve-muted transition-colors",
                   isWide && "lg:col-span-2"
                 )}
               >
-                <div className="flex items-start justify-between p-5 border-b border-[#333333]">
+                <div className="flex items-start justify-between p-5 border-b border-ve-border">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-1.5 py-0.5 rounded-[2px] bg-[#111111] border border-[#333333] text-[9px] font-mono text-[#888888] uppercase tracking-wider">
+                      <span className="px-1.5 py-0.5 rounded-[2px] bg-ve-surface border border-ve-border text-[9px] font-mono text-ve-muted uppercase tracking-wider">
                         {CHART_TYPE_LABEL[chart.type] ?? chart.type}
                       </span>
                       {chart.sheet?.includes('+') && (
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-[2px] bg-[#0070F3]/10 text-[#0070F3] border border-[#0070F3]/30 text-[9px] font-mono uppercase tracking-wider">
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-[2px] bg-ve-blue-muted text-ve-blue border border-ve-blue-border text-[9px] font-mono uppercase tracking-wider">
                           <Link2 className="h-2.5 w-2.5" />
                           Join
                         </span>
                       )}
                     </div>
-                    <h3 className="text-[15px] font-medium tracking-tight text-[#EDEDED]">
+                    <h3 className="text-[15px] font-medium tracking-tight text-ve-text">
                       {chart.title}
                     </h3>
                     {chart.description && (
-                      <p className="text-[12px] font-mono text-[#888888] mt-1 max-w-xl">
+                      <p className="text-[12px] font-mono text-ve-muted mt-1 max-w-xl">
                         {chart.description}
                       </p>
                     )}
@@ -96,15 +96,15 @@ export default function VisualLayer({ charts = [], onFilter }: VisualLayerProps)
                   
                   {chart.coverage !== undefined && (
                     <div className="flex flex-col items-end gap-1.5 pt-1">
-                      <span className="text-[9px] font-mono text-[#888888] uppercase tracking-widest leading-none">Integrity</span>
+                      <span className="text-[9px] font-mono text-ve-muted uppercase tracking-widest leading-none">Integrity</span>
                       <div className="flex items-center gap-2">
-                        <div className="w-12 h-1 bg-[#333333] overflow-hidden">
+                        <div className="w-12 h-1 bg-ve-border overflow-hidden">
                           <div
-                            className="h-full bg-[#0070F3] transition-all duration-1000"
+                            className="h-full bg-ve-blue transition-all duration-1000"
                             style={{ width: `${chart.coverage * 100}%` }}
                           />
                         </div>
-                        <span className="text-[9px] font-mono text-[#EDEDED]">{Math.round(chart.coverage * 100)}%</span>
+                        <span className="text-[9px] font-mono text-ve-text">{Math.round(chart.coverage * 100)}%</span>
                       </div>
                     </div>
                   )}
@@ -141,9 +141,9 @@ export default function VisualLayer({ charts = [], onFilter }: VisualLayerProps)
                         }}
                       </ParentSize>
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center bg-[#111111] rounded-[4px] border border-dashed border-[#333333]">
-                        <BarChart3 className="h-6 w-6 text-[#333333] mb-2" />
-                        <p className="text-[10px] font-mono text-[#888888] uppercase tracking-widest">Partial data available</p>
+                      <div className="h-full flex flex-col items-center justify-center bg-ve-surface rounded-[4px] border border-dashed border-ve-border">
+                        <BarChart3 className="h-6 w-6 text-ve-border mb-2" />
+                        <p className="text-[10px] font-mono text-ve-muted uppercase tracking-widest">Partial data available</p>
                       </div>
                     )}
                   </ChartErrorBoundary>
@@ -153,10 +153,10 @@ export default function VisualLayer({ charts = [], onFilter }: VisualLayerProps)
           })}
         </div>
       ) : (
-        <div className="py-20 rounded-[6px] border border-dashed border-[#333333] flex flex-col items-center justify-center text-center bg-[#111111]">
-          <BarChart3 className="h-8 w-8 text-[#333333] mb-4" />
-          <h3 className="text-[11px] font-mono text-[#888888] uppercase tracking-widest">Visual Layer Null</h3>
-          <p className="text-[#888888] text-[12px] font-mono mt-1">Insufficient data to compile visual projections.</p>
+        <div className="py-20 rounded-[6px] border border-dashed border-ve-border flex flex-col items-center justify-center text-center bg-ve-surface">
+          <BarChart3 className="h-8 w-8 text-ve-border mb-4" />
+          <h3 className="text-[11px] font-mono text-ve-muted uppercase tracking-widest">Visual Layer Null</h3>
+          <p className="text-ve-muted text-[12px] font-mono mt-1">Insufficient data to compile visual projections.</p>
         </div>
       )}
     </section>

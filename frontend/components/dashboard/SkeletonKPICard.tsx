@@ -5,27 +5,27 @@ import { motion } from 'framer-motion'
 
 export default function SkeletonKPICard() {
   return (
-    <div className="relative p-5 rounded-[6px] bg-[#0A0A0A] border border-[#333333] overflow-hidden">
+    <div className="relative p-5 rounded-[6px] bg-ve-skeleton border border-ve-border overflow-hidden">
       <div className="flex justify-between items-start mb-4">
         <div className="space-y-2">
           {/* Title skeleton */}
           <motion.div 
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="h-3 w-24 bg-[#222222] rounded-[2px]" 
+            className="h-3 w-24 bg-ve-border-subtle rounded-[2px]" 
           />
           {/* Subtitle skeleton */}
           <motion.div 
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-            className="h-2 w-16 bg-[#222222] rounded-[2px]" 
+            className="h-2 w-16 bg-ve-border-subtle rounded-[2px]" 
           />
         </div>
         {/* Icon skeleton */}
         <motion.div 
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-          className="h-8 w-8 bg-[#222222] rounded-[4px]" 
+          className="h-8 w-8 bg-ve-border-subtle rounded-[4px]" 
         />
       </div>
 
@@ -34,12 +34,12 @@ export default function SkeletonKPICard() {
         <motion.div 
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-          className="h-10 w-32 bg-[#222222] rounded-[4px]" 
+          className="h-10 w-32 bg-ve-border-subtle rounded-[4px]" 
         />
         <motion.div 
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-          className="h-4 w-12 bg-[#222222] rounded-[2px]" 
+          className="h-4 w-12 bg-ve-border-subtle rounded-[2px]" 
         />
       </div>
 
@@ -48,12 +48,12 @@ export default function SkeletonKPICard() {
         <motion.div 
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 1.0 }}
-          className="h-4 w-20 bg-[#222222] rounded-[2px]" 
+          className="h-4 w-20 bg-ve-border-subtle rounded-[2px]" 
         />
         <motion.div 
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
-          className="h-4 w-24 bg-[#222222] rounded-[2px]" 
+          className="h-4 w-24 bg-ve-border-subtle rounded-[2px]" 
         />
       </div>
       

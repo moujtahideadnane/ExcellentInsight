@@ -58,7 +58,7 @@ export default function ExportDropdown({ jobId }: ExportDropdownProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isExporting}
-        className="flex items-center gap-2 h-8 px-3 rounded-[4px] bg-[#EDEDED] text-[#000000] text-[11px] font-medium hover:bg-[#CCCCCC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 h-8 px-3 rounded-[4px] bg-ve-btn-primary text-ve-btn-text text-[11px] font-medium hover:bg-ve-btn-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         title="Export dashboard"
       >
         {isExporting ? (
@@ -90,30 +90,30 @@ export default function ExportDropdown({ jobId }: ExportDropdownProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 mt-2 w-48 bg-[#111111] border border-[#333333] rounded-[4px] shadow-lg overflow-hidden z-20"
+              className="absolute right-0 mt-2 w-48 bg-ve-surface border border-ve-border rounded-[4px] shadow-lg overflow-hidden z-20"
             >
               <div className="py-1">
                 <button
                   onClick={() => handleExport('pdf')}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] text-[#EDEDED] hover:bg-[#222222] transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] text-ve-text hover:bg-ve-border-subtle transition-colors"
                 >
-                  <FileText className="h-4 w-4 text-[#FF4444]" />
+                  <FileText className="h-4 w-4 text-ve-error" />
                   <div className="flex flex-col items-start">
                     <span className="font-medium">Export as PDF</span>
-                    <span className="text-[9px] text-[#888888] font-mono">Portable Document</span>
+                    <span className="text-[9px] text-ve-muted font-mono">Portable Document</span>
                   </div>
                 </button>
 
-                <div className="h-px bg-[#333333] my-1" />
+                <div className="h-px bg-ve-border my-1" />
 
                 <button
                   onClick={() => handleExport('excel')}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] text-[#EDEDED] hover:bg-[#222222] transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] text-ve-text hover:bg-ve-border-subtle transition-colors"
                 >
-                  <Table className="h-4 w-4 text-[#10B981]" />
+                  <Table className="h-4 w-4 text-emerald-500" />
                   <div className="flex flex-col items-start">
                     <span className="font-medium">Export as Excel</span>
-                    <span className="text-[9px] text-[#888888] font-mono">Spreadsheet Format</span>
+                    <span className="text-[9px] text-ve-muted font-mono">Spreadsheet Format</span>
                   </div>
                 </button>
               </div>
