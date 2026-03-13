@@ -68,9 +68,10 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-h-full">
+      <div className="flex flex-col gap-6 w-full">
 
-      {/* Header */}
-      <motion.div
+        {/* Header */}
+        <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
@@ -173,6 +174,7 @@ export default function DashboardPage() {
           <ProgressTracker data={progress} onStop={handleStopAnalysis} />
         </motion.div>
       )}
+      </div>
     </div>
   )
 }

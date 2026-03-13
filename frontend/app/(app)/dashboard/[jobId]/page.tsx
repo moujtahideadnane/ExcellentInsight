@@ -166,8 +166,8 @@ export default function DashboardDetailPage() {
   if (!data) return null
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 w-full bg-[#000000]">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 pb-32 w-full bg-[#000000]">
+      <div className="max-w-7xl mx-auto space-y-12">
 
         {/* ── Page Header ─────────────────────────────── */}
         <motion.header
