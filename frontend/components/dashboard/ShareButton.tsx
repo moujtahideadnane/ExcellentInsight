@@ -25,6 +25,11 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [shares, setShares] = useState<ShareData[]>([])
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  const [origin, setOrigin] = useState('')
+
+  React.useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
 
   const fetchShares = async () => {
     try {
@@ -77,12 +82,17 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
     }
   }
 
-  const copyToClipboard = (token: string, shareUrl: string) => {
-    const fullUrl = `${window.location.origin}${shareUrl}`
-    navigator.clipboard.writeText(fullUrl)
-    setCopiedToken(token)
-    setTimeout(() => setCopiedToken(null), 2000)
-    toast.success('Link copied to clipboard!')
+  const copyToClipboard = async (token: string, shareUrl: string) => {
+    const fullUrl = `${origin}${shareUrl}`
+    try {
+      await navigator.clipboard.writeText(fullUrl)
+      setCopiedToken(token)
+      setTimeout(() => setCopiedToken(null), 2000)
+      toast.success('Link copied to clipboard!')
+    } catch (err) {
+      console.error('Clipboard error:', err)
+      toast.error('Failed to copy link. Please copy it manually.')
+    }
   }
 
   const formatDate = (dateStr: string) => {
@@ -99,6 +109,7 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
         onClick={handleOpen}
         className="flex items-center justify-center h-8 w-8 rounded-[4px] border border-[#333333] hover:bg-[#111111] transition-colors text-[#888888] hover:text-[#EDEDED]"
         title="Share dashboard"
+        aria-label="Share dashboard"
       >
         <Share2 className="h-4 w-4" />
       </button>
@@ -134,6 +145,7 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                 <button
                   onClick={() => setIsOpen(false)}
                   className="h-6 w-6 rounded-[4px] hover:bg-[#222222] flex items-center justify-center text-[#888888] hover:text-[#EDEDED] transition-colors"
+                  aria-label="Close dialog"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -241,7 +253,7 @@ export default function ShareButton({ jobId }: ShareButtonProps) {
                           {share.is_active && (
                             <div className="mt-2 p-2 rounded-[4px] bg-[#000000] border border-[#333333]">
                               <code className="text-[9px] text-[#888888] font-mono break-all">
-                                {window.location.origin}{share.share_url}
+                                {origin}{share.share_url}
                               </code>
                             </div>
                           )}

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import { formatKpiValue } from '@/lib/format'
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Minus, Activity, Edit3, Save, X, Info, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -19,53 +20,6 @@ const priorityStyles: Record<string, { badge: string; dot: string }> = {
   low:    { badge: 'bg-[#000000] text-[#888888] border-[#222222]', dot: 'bg-[#888888]' },
 }
 
-function formatKpiValue(value: number | string | null, format?: string, unit?: string): {
-  display: string
-  suffix: string
-} {
-  if (value === null || value === undefined) return { display: 'N/A', suffix: '' }
-  
-  const unitLower = (unit || '').toLowerCase()
-  const unitHasScale = /(^|\s)(m|k|b|t|million|billion|trillion|milliard|milliards)(\s|$)/i.test(unitLower)
-
-  if (typeof value === 'string') {
-    const s = value.trim()
-    const valueHasScale = /(^|\s)(M|K|B|T|Millions|Billions|k|m|b|t)(\s|$)/i.test(s) || 
-                          s.includes('dh') || s.includes('€') || s.includes('$') || s.includes('%')
-    if (valueHasScale) return { display: s, suffix: unit ?? '' }
-  }
-
-  const num = Number(value)
-  if (isNaN(num)) return { display: String(value), suffix: unit ?? '' }
-
-  const abs = Math.abs(num)
-  const sign = num < 0 ? '-' : ''
-
-  if (format === 'percentage') {
-    const pctVal = num <= 1 && num >= -1 ? num * 100 : num
-    const absPct = Math.abs(pctVal)
-    
-    if (absPct >= 1_000_000_000) return { display: `${sign}${(absPct / 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}`, suffix: 'B%' }
-    if (absPct >= 1_000_000) return { display: `${sign}${(absPct / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}`, suffix: 'M%' }
-    
-    const display = absPct >= 1000 ? pctVal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : pctVal.toLocaleString('en-US', { maximumFractionDigits: 1 })
-    return { display, suffix: '%' }
-  }
-
-  if (unitHasScale) {
-    const formatted = num % 1 === 0 ? num.toLocaleString('en-US') : num.toLocaleString('en-US', { maximumFractionDigits: 2 })
-    return { display: formatted, suffix: unit ?? '' }
-  }
-
-  if (abs >= 1_000_000_000_000) return { display: `${sign}${(abs / 1_000_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 2 })}`, suffix: unit ? `T ${unit}` : 'T' }
-  if (abs >= 1_000_000_000) return { display: `${sign}${(abs / 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 2 })}`, suffix: unit ? `B ${unit}` : 'B' }
-  if (abs >= 1_000_000) return { display: `${sign}${(abs / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 2 })}`, suffix: unit ? `M ${unit}` : 'M' }
-  if (abs >= 10_000) return { display: `${sign}${(abs / 1_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}`, suffix: unit ? `K ${unit}` : 'K' }
-
-  const formatted = num % 1 === 0 ? num.toLocaleString('en-US') : num.toLocaleString('en-US', { maximumFractionDigits: 2 })
-  return { display: formatted, suffix: unit ?? '' }
-}
-
 export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDelete }: InteractiveKPICardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -73,13 +27,14 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const { display, suffix } = formatKpiValue(kpi.value, kpi.format, kpi.unit)
-  const isNA = display === 'N/A'
-  const valueSize = display.length > 10 ? 'text-2xl' : 'text-3xl'
+  const valueAsNumber = typeof kpi.value === 'number' ? kpi.value : (typeof kpi.value === 'string' ? Number(kpi.value) : undefined);
+  const formattedValue = formatKpiValue(valueAsNumber, kpi.unit, kpi.format)
+  
+  const valueSize = formattedValue.length > 10 ? 'text-2xl' : 'text-3xl'
   const pConf = priorityStyles[kpi.priority ?? 'low']
   const coveragePct = Math.round((kpi.coverage ?? 0) * 100)
 
-  const handleSave = async (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation()
     if (!onUpdateFormula) return
     setIsSaving(true)
@@ -91,7 +46,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
     }
   }
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDelete = async (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation()
     if (!onDelete) return
 
@@ -104,12 +59,25 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isEditing) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setIsFlipped(!isFlipped)
+    }
+  }
+
   return (
     <div 
-      className="relative h-[220px] w-full perspective-1000 group cursor-pointer"
+      className="relative h-[220px] w-full perspective-1000 group cursor-pointer outline-none"
       onMouseEnter={() => !isEditing && setIsFlipped(true)}
       onMouseLeave={() => !isEditing && setIsFlipped(false)}
       onClick={() => !isEditing && setIsFlipped(!isFlipped)}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-expanded={isFlipped}
+      aria-label={`KPI Card: ${kpi.label}. Value: ${formattedValue}. Press space or enter to view details.`}
     >
       <motion.div
         className="relative w-full h-full preserve-3d"
@@ -134,14 +102,9 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
 
             {/* Value */}
             <div className="flex items-baseline gap-1.5 min-h-[2.5rem] flex-wrap z-10">
-              <span className={cn("font-medium tracking-tight font-mono", isNA ? 'text-xl text-[#888888]' : `${valueSize} text-[#EDEDED]`)}>
-                {display}
+              <span className={cn("font-medium tracking-tight font-mono", `${valueSize} text-[#EDEDED]`)}>
+                {formattedValue}
               </span>
-              {suffix && !isNA && (
-                <span className="text-[13px] font-mono text-[#888888] whitespace-nowrap">
-                  {suffix}
-                </span>
-              )}
             </div>
 
             {/* Progress / Coverage */}
@@ -187,8 +150,8 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
             </div>
 
             {/* Vercel Edge corner accents */}
-            <div className="absolute top-0 right-0 w-4 h-4 border-t 1px border-r 1px border-[#888888] opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 border-b 1px border-l 1px border-[#888888] opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[#888888] opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-[#888888] opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
 
@@ -206,6 +169,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
                                 disabled={isDeleting}
                                 className="p-1 rounded-[4px] bg-[#2A0808] border border-[#5C1A1A] hover:border-[#FF4444] text-[#FF4444] transition-all disabled:opacity-50"
                                 title="Delete KPI"
+                                aria-label="Delete metric"
                             >
                                 {isDeleting ? (
                                     <Activity className="h-3.5 w-3.5 animate-spin" />
@@ -219,6 +183,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
                                 onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
                                 className="p-1 rounded-[4px] bg-[#000000] border border-[#333333] hover:border-[#888888] hover:text-[#EDEDED] text-[#888888] transition-colors"
                                 title="Edit Formula"
+                                aria-label="Edit formula"
                             >
                                 <Edit3 className="h-3.5 w-3.5" />
                             </button>
@@ -234,6 +199,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
                                 value={editFormula}
                                 onChange={(e) => setEditFormula(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
                                 className="w-full h-20 bg-[#000000] border border-[#333333] rounded-[4px] p-2 text-[11px] font-mono text-[#EDEDED] focus:outline-none focus:border-[#EDEDED] resize-none"
                             />
                         </div>
@@ -242,6 +208,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
                                 onClick={handleSave}
                                 disabled={isSaving}
                                 className="flex-1 bg-[#EDEDED] text-[#000000] disabled:opacity-50 h-7 rounded-[4px] text-[10px] font-medium flex items-center justify-center gap-2 hover:bg-[#CCCCCC] transition-colors"
+                                aria-label="Save changes"
                             >
                                 {isSaving ? <Activity className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                                 Commit Changes
@@ -249,6 +216,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsEditing(false); setEditFormula(kpi.formula || ''); }}
                                 className="w-7 h-7 bg-[#000000] border border-[#333333] text-[#888888] hover:text-[#EDEDED] hover:border-[#888888] rounded-[4px] flex items-center justify-center transition-colors"
+                                aria-label="Cancel editing"
                             >
                                 <X className="h-3.5 w-3.5" />
                             </button>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
 import { EventSourcePolyfill } from 'event-source-polyfill'
-import api from '@/lib/api'
+import { getValidToken } from '@/lib/api'
 
 export interface ProgressUpdate {
   id: string
@@ -55,42 +55,7 @@ export function useJobProgress(options: UseJobProgressOptions | string): UseJobP
   const retryRef = useRef(0)
   const sourceRef = useRef<InstanceType<typeof EventSourcePolyfill> | null>(null)
 
-  async function parseJwtPayload(token: string | null) {
-    if (!token) return null
-    try {
-      const parts = token.split('.')
-      if (parts.length < 2 || !parts[1]) return null
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-      return payload
-    } catch {
-      return null
-    }
-  }
 
-  async function ensureValidAccessToken(): Promise<string | null> {
-    const access = useAuthStore.getState().accessToken
-    const refresh = useAuthStore.getState().refreshToken
-    const payload = await parseJwtPayload(access)
-    const now = Math.floor(Date.now() / 1000)
-    // If token is missing or will expire within 30s, try refresh
-    if (!access || (payload && payload.exp && payload.exp - now < 30)) {
-      if (!refresh) {
-        // nothing we can do
-        return access
-      }
-      try {
-        const resp = await api.post('/auth/refresh', { refresh_token: refresh })
-        const { access_token, refresh_token, user } = resp.data
-        useAuthStore.getState().setAuth(user, access_token, refresh_token)
-        return access_token
-      } catch {
-        // Refresh failed — logout to force re-auth
-        useAuthStore.getState().logout()
-        return null
-      }
-    }
-    return access
-  }
 
   const connect = async () => {
     if (!jobId) {
@@ -101,7 +66,7 @@ export function useJobProgress(options: UseJobProgressOptions | string): UseJobP
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
     // Ensure we have a valid token (refresh proactively if needed)
-    const token = await ensureValidAccessToken()
+    const token = await getValidToken()
 
     // Build URL; prefer header auth but keep query token fallback if header not available
     const url = `${apiUrl}/jobs/${jobId}/progress${token ? '' : `?token=${useAuthStore.getState().accessToken || ''}`}`

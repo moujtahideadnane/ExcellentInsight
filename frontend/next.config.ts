@@ -1,18 +1,29 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from '@next/bundle-analyzer';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
-})
+});
 
 const nextConfig: NextConfig = {
   output: 'standalone',
   experimental: {
-    optimizePackageImports: ['lucide-react', '@visx/group', '@visx/shape', '@visx/scale'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@visx/group', 
+      '@visx/shape', 
+      '@visx/scale',
+      '@visx/tooltip',
+      '@visx/axis',
+      '@visx/grid',
+      '@visx/event',
+      '@visx/gradient',
+      'framer-motion',
+      'sonner',
+      'zustand',
+      'axios'
+    ],
   },
-  /* eslint: {
-    ignoreDuringBuilds: true,
-  }, */
 };
 
 export default withBundleAnalyzer(nextConfig);

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Server, Clock, ArrowRight, Loader2, FileText, Plus, AlertTriangle } from 'lucide-react'
 import { useJobStore } from '@/stores/job-store'
 import { cn } from '@/lib/utils'
+import { formatBytes } from '@/lib/format'
 
 interface Job {
   id: string
@@ -22,21 +23,16 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string;
   completed:  { color: '#EDEDED', bg: '#111111', border: '#333333', label: 'COMPILED' },
   done:       { color: '#EDEDED', bg: '#111111', border: '#333333', label: 'ONLINE' },
   failed:     { color: '#FF4444', bg: '#2A0808', border: '#5C1A1A', label: 'EXCEPTION' },
-  processing: { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'EXECUTING' },
+  processing: { color: '#0070F3', bg: 'rgba(0, 112, 243, 0.1)', border: 'rgba(0, 112, 243, 0.3)', label: 'EXECUTING' },
   pending:    { color: '#888888', bg: '#111111', border: '#333333', label: 'AWAIT' },
-  analyzing:  { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'ANALYZING' },
-  enriching:  { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'ENRICHING' },
-  parsing:    { color: '#0070F3', bg: '#0070F3/10', border: '#0070F3/30', label: 'PARSING' },
+  analyzing:  { color: '#0070F3', bg: 'rgba(0, 112, 243, 0.1)', border: 'rgba(0, 112, 243, 0.3)', label: 'ANALYZING' },
+  enriching:  { color: '#0070F3', bg: 'rgba(0, 112, 243, 0.1)', border: 'rgba(0, 112, 243, 0.3)', label: 'ENRICHING' },
+  parsing:    { color: '#0070F3', bg: 'rgba(0, 112, 243, 0.1)', border: 'rgba(0, 112, 243, 0.3)', label: 'PARSING' },
 }
 
 const DEFAULT_STATUS = { color: '#888888', bg: '#111111', border: '#333333', label: 'STATUS_UNKNOWN' }
 
-function formatBytes(bytes?: number): string | null {
-  if (!bytes) return null
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
+
 
 export default function JobsPage() {
   const router    = useRouter()
@@ -128,7 +124,7 @@ export default function JobsPage() {
             const sc = STATUS_CONFIG[job.status] || STATUS_CONFIG['pending'] || DEFAULT_STATUS
             const isClickable = job.status === 'completed' || job.status === 'done'
             const displayName = job.file_name || `${job.id.slice(0, 12)}`
-            const sizeStr = formatBytes(job.file_size_bytes)
+            const sizeStr = job.file_size_bytes ? formatBytes(job.file_size_bytes) : null
             const domain = job.llm_result?.domain
 
             return (

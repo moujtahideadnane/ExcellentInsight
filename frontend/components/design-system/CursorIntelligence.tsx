@@ -7,8 +7,12 @@ export default function CursorIntelligence() {
     // Only run on client
     if (typeof window === 'undefined') return
 
+    // Only enable for desktop (fine-grained pointer)
+    const isTouchDevice = !window.matchMedia('(pointer: fine)').matches
+    if (isTouchDevice) return
+
     const cursor = document.createElement('div')
-    cursor.className = 'gemeni-cursor'
+    cursor.className = 'gemini-cursor'
     document.body.appendChild(cursor)
 
     let mouseX = 0, mouseY = 0

@@ -5,7 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 60_000, // 60s — allows for heavy analysis/enrichment fetches
+  timeout: 60_000, 
   headers: {
     'Content-Type': 'application/json',
   },
@@ -31,24 +31,79 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 /**
- * Returns a user-safe error message.
- * - 5xx errors → generic message (don't leak internal details)
- * - 4xx errors → use the API's `detail` field directly (already user-safe)
+ * Returns a valid access token. If the current one is expired or missing,
+ * it attempts to refresh it using the refresh token.
  */
+export async function getValidToken(): Promise<string | null> {
+  const { accessToken, refreshToken, user, setAuth, logout } = useAuthStore.getState();
+  
+  if (!accessToken) return null;
+
+  // Simple JWT expiration check
+  try {
+    const parts = accessToken.split('.');
+    if (parts.length === 3) {
+      const part = parts[1];
+      if (part) {
+        const payload = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+        const now = Math.floor(Date.now() / 1000);
+        // If token is valid for more than 30 seconds, return it
+        if (payload.exp && payload.exp - now > 30) {
+          return accessToken;
+        }
+      }
+    }
+  } catch {
+    // If parsing fails, proceed to refresh
+  }
+
+  if (!refreshToken) {
+    logout();
+    return null;
+  }
+
+  // Handle concurrent refresh requests
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+      refresh_token: refreshToken,
+    });
+
+    const { access_token, refresh_token: new_refresh_token, user: freshUser } = response.data;
+    setAuth(freshUser || user, access_token, new_refresh_token || refreshToken);
+    processQueue(null, access_token);
+    return access_token;
+  } catch (refreshError) {
+    processQueue(refreshError, null);
+    logout();
+    if (typeof window !== 'undefined') window.location.href = '/login';
+    return null;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 export function getErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status ?? 0;
     if (status >= 500) return 'Something went wrong on our end. Please try again in a moment.';
     if (error.code === 'ECONNABORTED') return 'The request timed out. Please check your connection.';
-    return error.response?.data?.detail ?? error.message ?? 'An unexpected error occurred.';
+    return error.response?.data?.detail ?? (error as Error).message ?? 'An unexpected error occurred.';
   }
   return 'An unexpected error occurred.';
 }
 
-// ── Request interceptor — attach JWT ─────────────────────────────────────────
 api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().accessToken;
+  async (config) => {
+    // Proactively get a valid token if possible
+    const token = await getValidToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -57,57 +112,22 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Response interceptor — handle 401 / token refresh ────────────────────────
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(error);
+    // If we get a 401 and haven't retried yet, try one manual refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const token = await getValidToken();
+      if (token) {
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      }
     }
-
-    const refreshToken = useAuthStore.getState().refreshToken;
-
-    if (!refreshToken) {
-      useAuthStore.getState().logout();
-      if (typeof window !== 'undefined') window.location.href = '/login';
-      return Promise.reject(error);
-    }
-
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        })
-        .catch((err) => Promise.reject(err));
-    }
-
-    originalRequest._retry = true;
-    isRefreshing = true;
-
-    try {
-      const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-        refresh_token: refreshToken,
-      });
-
-      const { access_token, refresh_token, user } = response.data;
-      useAuthStore.getState().setAuth(user, access_token, refresh_token);
-      originalRequest.headers.Authorization = `Bearer ${access_token}`;
-      processQueue(null, access_token);
-
-      return api(originalRequest);
-    } catch (refreshError) {
-      processQueue(refreshError, null);
-      useAuthStore.getState().logout();
-      if (typeof window !== 'undefined') window.location.href = '/login';
-      return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
-    }
+    
+    return Promise.reject(error);
   }
 );
 

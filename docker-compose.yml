@@ -47,6 +47,7 @@ services:
     command: /bin/sh -c "chown -R 114:65534 /app/uploads && chmod -R 775 /app/uploads"
     volumes:
       - uploads:/app/uploads
+    restart: "no"
 
   backend:
     build: .

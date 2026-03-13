@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { BarChart3, RefreshCw, Home } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 
 export default function GlobalError({
   error,
@@ -18,55 +18,49 @@ export default function GlobalError({
   }, [error])
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#000000] flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md text-center"
       >
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-100">
-            <BarChart3 className="h-5 w-5 text-white" />
-          </div>
-          <span className="font-extrabold text-xl text-slate-800">
-            Excellent<span className="text-emerald-500">Insight</span>
-          </span>
-        </div>
-
-        {/* Error visual */}
-        <div className="relative mb-8">
-          <div className="text-[120px] font-black text-slate-100 leading-none select-none">!</div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-5xl">⚠️</div>
+        {/* Icon */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="h-14 w-14 rounded-[6px] bg-[#2A0808] border border-[#5C1A1A] flex items-center justify-center">
+            <AlertTriangle className="h-7 w-7 text-[#FF4444]" />
           </div>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-slate-800 mb-3 tracking-tight">
+        {/* Error label */}
+        <div className="inline-flex items-center px-2 py-1 rounded-[4px] bg-[#2A0808] border border-[#5C1A1A] text-[10px] font-mono text-[#FF4444] uppercase tracking-widest mb-6">
+          Runtime Exception
+        </div>
+
+        <h1 className="text-[28px] font-semibold tracking-tight text-[#EDEDED] mb-3 leading-tight">
           Something went wrong
         </h1>
-        <p className="text-slate-400 font-medium mb-8 leading-relaxed max-w-sm mx-auto">
+        <p className="text-[13px] text-[#888888] font-mono mb-2 leading-relaxed max-w-sm mx-auto">
           An unexpected error occurred. Our team has been notified.
-          {error.digest && (
-            <span className="block text-xs mt-2 font-mono text-slate-300">
-              Ref: {error.digest}
-            </span>
-          )}
         </p>
+        {error.digest && (
+          <p className="text-[10px] font-mono text-[#555555] mb-8 uppercase tracking-widest">
+            Ref: {error.digest}
+          </p>
+        )}
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
           <button
             onClick={reset}
-            className="btn-primary flex items-center gap-2.5 w-full sm:w-auto justify-center"
+            className="flex items-center gap-2 h-9 px-5 rounded-[4px] bg-[#EDEDED] text-[#000000] text-[13px] font-medium hover:bg-[#CCCCCC] transition-colors w-full sm:w-auto justify-center"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" />
             Try again
           </button>
           <Link
             href="/dashboard"
-            className="flex items-center gap-2.5 px-5 py-2.5 rounded-2xl border border-slate-200 font-bold text-sm text-slate-600 hover:bg-slate-50 transition-colors w-full sm:w-auto justify-center"
+            className="flex items-center gap-2 h-9 px-5 rounded-[4px] border border-[#333333] text-[#888888] text-[13px] font-medium hover:border-[#888888] hover:text-[#EDEDED] hover:bg-[#111111] transition-colors w-full sm:w-auto justify-center"
           >
-            <Home className="h-4 w-4" />
+            <Home className="h-3.5 w-3.5" />
             Back to dashboard
           </Link>
         </div>

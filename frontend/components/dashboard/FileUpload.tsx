@@ -113,7 +113,7 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
             </div>
 
             <h3 className="text-[16px] font-semibold tracking-tight text-[#EDEDED] mb-2">
-              {isDragging ? 'Initialize injestion.' : 'Deploy dataset'}
+              {isDragging ? 'Initialize ingestion.' : 'Deploy dataset'}
             </h3>
             <p className="text-[13px] text-[#888888] font-medium max-w-sm">
               Drag and drop your schema or <span className="text-[#EDEDED] underline underline-offset-4 cursor-pointer">browse local registry</span>

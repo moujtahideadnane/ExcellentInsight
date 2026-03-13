@@ -2,7 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 import React from "react";
 import { Toaster } from "sonner";
+import { Geist, Geist_Mono } from "next/font/google";
 import CursorIntelligence from "@/components/design-system/CursorIntelligence";
+
+const geistSans = Geist({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://excellentinsight.app";
 
@@ -60,18 +71,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* App Router: Vercel Edge explicit font choices (Geist & Geist Mono) */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+      <head />
       {/* Vercel Edge baseline: Pure black bg, off-white text, specific selection color */}
-      <body className="antialiased bg-black text-[#EDEDED] selection:bg-[#0070F3] selection:text-white">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-[#EDEDED] selection:bg-[#0070F3] selection:text-white`}>
         <CursorIntelligence />
         <QueryProvider>
           {children}

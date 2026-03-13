@@ -38,7 +38,7 @@ export default function AuthLayout({
           <div className="mb-12">
             <div className="inline-flex items-center gap-2 px-2 py-1 rounded-[4px] bg-[#000000] border border-[#333333] mb-6">
               <Terminal className="h-3 w-3 text-[#888888]" />
-              <span className="text-[10px] font-mono text-[#888888]">v2.4.0-stable</span>
+              <span className="text-[10px] font-mono text-[#888888]">v1.0.0-beta</span>
             </div>
             <h2 className="text-[40px] font-bold text-[#EDEDED] leading-[1.1] tracking-tighter mb-4">
               Access the <br />
@@ -54,7 +54,7 @@ export default function AuthLayout({
             {[
               { icon: Zap, text: 'Instant inferencing at the Edge' },
               { icon: Server, text: 'Distributed WebGL rendering' },
-              { icon: ShieldCheck, text: 'SOC2 Type II strict isolation' },
+              { icon: ShieldCheck, text: 'End-to-end encrypted telemetry' },
             ].map((item, i) => (
                <motion.div
                 key={i}

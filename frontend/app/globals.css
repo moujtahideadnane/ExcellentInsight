@@ -72,7 +72,7 @@ body::after {
 }
 
 /* ── Custom Cursor Styles (Section 5.1) ── */
-.gemeni-cursor {
+.gemini-cursor {
   width: 12px; height: 12px;
   background: var(--accent);
   border-radius: 50%;
@@ -83,7 +83,7 @@ body::after {
   transition: width 200ms ease, height 200ms ease, background 200ms ease;
   mix-blend-mode: difference;
 }
-.gemeni-cursor.is-hovering {
+.gemini-cursor.is-hovering {
   width: 48px; height: 48px;
   top: -24px; left: -24px;
 }

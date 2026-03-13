@@ -104,6 +104,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="hidden lg:flex h-6 w-6 items-center justify-center rounded-[4px] text-[#888888] hover:text-[#EDEDED] hover:bg-[#111111] transition-colors"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
@@ -112,6 +113,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
           <button
             onClick={() => setMobileOpen(false)}
             className="flex lg:hidden h-6 w-6 items-center justify-center rounded-[4px] text-[#888888] hover:bg-[#111111]"
+            aria-label="Close menu"
           >
             <X className="h-4 w-4" />
           </button>
@@ -159,6 +161,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
                 onClick={() => logout()}
                 className="h-6 w-6 flex items-center justify-center rounded-[4px] text-[#888888] hover:text-[#EDEDED] hover:bg-[#1C1C1C] transition-colors"
                 title="Sign out"
+                aria-label="Sign out"
               >
                 <LogOut className="h-3.5 w-3.5" />
               </button>
@@ -168,6 +171,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
               onClick={() => logout()}
               className="w-10 h-10 mx-auto flex items-center justify-center rounded-[4px] text-[#888888] hover:text-[#EDEDED] hover:bg-[#111111] transition-colors"
               title="Sign out"
+              aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -184,6 +188,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
             <button
               onClick={() => setMobileOpen(true)}
               className="p-1.5 rounded-[4px] lg:hidden text-[#888888] hover:bg-[#111111]"
+              aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>

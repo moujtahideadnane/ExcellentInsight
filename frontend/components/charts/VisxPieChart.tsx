@@ -131,7 +131,7 @@ export default function VisxPieChart({
       </svg>
       {tooltipData && (
         <TooltipWithBounds
-          key={Math.random()}
+          key={`tooltip-${tooltipData.label}`}
           top={tooltipTop}
           left={tooltipLeft}
           style={{

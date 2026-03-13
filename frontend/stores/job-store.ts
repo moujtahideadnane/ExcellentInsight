@@ -16,6 +16,7 @@ export const useJobStore = create<JobState>()(
     }),
     {
       name: 'excellent-insight-job-storage',
+      skipHydration: true,
     }
   )
 )

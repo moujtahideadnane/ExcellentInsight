@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { getSeriesColor } from '@/lib/chart-colors'
+import { formatValue } from '@/lib/format'
 import { Group } from '@visx/group'
 import { LinePath } from '@visx/shape'
 import { curveMonotoneX } from '@visx/curve'
@@ -99,33 +100,6 @@ export default function VisxLineChart({
     return scaleLinear<number>({ range: [yMax, 0], domain: [lower, upper] })
   }, [yMax, data, isMultiSeries, seriesKeys])
 
-  const formatValue = (v: number | undefined): string => {
-    if (v === undefined || v === null || isNaN(v)) return 'N/A'
-    if (format === 'percentage') return `${v.toLocaleString('en-US', { maximumFractionDigits: 1 })}%`
-    
-    const unitLower = (unit || '').toLowerCase()
-    const unitHasScale = /(^|\s)(m|k|b|t|million|billion|trillion|milliard|milliards)(\s|$)/i.test(unitLower)
-    
-    if (format === 'currency') {
-      const prefix = unitLower.includes('€') ? '€' : unitLower.includes('£') ? '£' : '$'
-      const val = unitHasScale ? v : (v >= 1000 ? v / 1000 : v)
-      const suffix = unitHasScale ? '' : (v >= 1000 ? 'K' : '')
-      return `${prefix}${val.toLocaleString('en-US', { maximumFractionDigits: 1 })}${suffix}`
-    }
-
-    const abs = Math.abs(v)
-    const sign = v < 0 ? '-' : ''
-    
-    if (unitHasScale) {
-       return `${sign}${abs.toLocaleString('en-US', { maximumFractionDigits: 1 })}`
-    }
-
-    if (abs >= 1_000_000_000_000) return `${sign}${(abs / 1_000_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}T`
-    if (abs >= 1_000_000_000) return `${sign}${(abs / 1_000_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}B`
-    if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}M`
-    if (abs >= 1_000) return `${sign}${(abs / 1_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}K`
-    return v.toLocaleString('en-US', { maximumFractionDigits: 1 })
-  }
 
   if (width < 30) return null
 
@@ -153,7 +127,7 @@ export default function VisxLineChart({
             tickLabelProps={() => ({
               fill: 'var(--muted-foreground)',
               fontSize: 9,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontFamily: "'Geist Mono', monospace",
               textAnchor: needsRotation ? 'end' : 'middle',
               angle: needsRotation ? -45 : 0,
               fontWeight: 600,
@@ -167,7 +141,7 @@ export default function VisxLineChart({
             tickStroke="var(--line)"
             hideTicks={true}
             numTicks={5}
-            tickFormat={(v: unknown) => formatValue(Number(v))}
+            tickFormat={(v: unknown) => formatValue(Number(v), format, unit)}
             tickLabelProps={() => ({
               fill: 'var(--muted-foreground)',
               fontSize: 9,
@@ -278,18 +252,18 @@ export default function VisxLineChart({
         </Group>
       </svg>
       {isMultiSeries && seriesKeys && seriesKeys.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-4 mt-3 pt-2 border-t border-slate-100">
+        <div className="flex flex-wrap justify-center gap-4 mt-3 pt-2 border-t border-[#333333]">
           {seriesKeys.map((sk, i) => (
             <div key={sk} className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getSeriesColor(i) }} />
-              <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]">{sk}</span>
+              <span className="text-[11px] font-mono text-[#888888] truncate max-w-[120px]">{sk}</span>
             </div>
           ))}
         </div>
       )}
       {tooltipData && (
         <TooltipWithBounds
-          key={Math.random()}
+          key={`tooltip-${tooltipData.label}`}
           top={tooltipTop}
           left={tooltipLeft}
           style={{
@@ -306,12 +280,12 @@ export default function VisxLineChart({
           <div className="text-[10px] uppercase tracking-widest font-extrabold mb-1 opacity-50">{tooltipData.label}</div>
           {'seriesKey' in tooltipData && tooltipData.seriesKey != null ? (
             <div className="text-sm font-black" style={{ color: getSeriesColor(seriesKeys?.indexOf(tooltipData.seriesKey) ?? 0) }}>
-              {tooltipData.seriesKey}: {formatValue(tooltipData.seriesValue)}
+              {tooltipData.seriesKey}: {formatValue(tooltipData.seriesValue, format, unit)}
               {unit && !format && <span className="opacity-70 ml-1">{unit}</span>}
             </div>
           ) : (
             <div className="text-sm font-black" style={{ color: getSeriesColor(0) }}>
-              {formatValue(tooltipData.value as number)}
+              {formatValue(tooltipData.value as number, format, unit)}
               {unit && !format && <span className="opacity-70 ml-1">{unit}</span>}
             </div>
           )}
