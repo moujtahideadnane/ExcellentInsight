@@ -75,7 +75,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="mb-8"
+        className="mb-2"
       >
         <div className="text-[10px] font-mono text-ve-muted uppercase tracking-widest mb-2">Workspace Region: Global Edge</div>
         <h1 className="text-[32px] font-semibold text-ve-text tracking-tight leading-tight">
@@ -169,7 +169,7 @@ export default function DashboardPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.99 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-ve-surface border border-ve-border rounded-[6px] p-6 lg:p-8 relative overflow-hidden"
+          className="bg-ve-surface border border-ve-border rounded-[6px] p-5 lg:p-6 relative overflow-hidden"
         >
           <ProgressTracker data={progress} onStop={handleStopAnalysis} />
         </motion.div>

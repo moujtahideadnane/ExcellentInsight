@@ -32,11 +32,11 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
   const progress = data?.progress || 0
 
   return (
-    <div className="w-full max-w-2xl py-8 text-left">
+    <div className="w-full max-w-2xl py-4 text-left">
       {/* Header */}
-      <div className="mb-10 text-left">
+      <div className="mb-6 text-left">
         <div className={cn(
-          "text-[10px] font-mono px-2 py-1 rounded-[2px] mb-4 mx-auto w-fit uppercase tracking-widest border",
+          "text-[10px] font-mono px-2 py-1 rounded-[2px] mb-4 w-fit uppercase tracking-widest border",
           isFailed ? "bg-ve-error-bg text-ve-error border-ve-error-border" : 
           isDone ? "bg-ve-surface text-ve-blue border-ve-blue-border" : 
           isCancelled ? "bg-amber-950 text-ve-warning border-amber-600/30" : 
@@ -44,14 +44,14 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
         )}>
           {isFailed ? 'Exception' : isDone ? 'Compiled' : isCancelled ? 'Halted' : 'Executing'}
         </div>
-        <h2 className="text-[24px] font-semibold tracking-tight text-ve-text mb-3">
+        <h2 className="text-[22px] font-semibold tracking-tight text-ve-text mb-2">
           {isFailed ? 'Process Terminated.' : isDone ? 'System Online.' : isCancelled ? 'Execution Stopped.' : 'Processing Buffer...'}
         </h2>
         
         {isFailed || isCancelled ? (
           <div className="space-y-6">
             <div className={cn(
-               "max-w-md mx-auto p-4 rounded-[4px] border text-[12px] font-mono",
+               "max-w-md p-4 rounded-[4px] border text-[12px] font-mono",
                isCancelled ? "bg-amber-950 border-amber-600/30 text-ve-warning" : "bg-ve-error-bg border-ve-error-border text-ve-error"
             )}>
               {data?.message || (isCancelled ? "Process interrupted by user instruction." : "Unhandled exception caught during runtime.")}
@@ -67,14 +67,14 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
-            <p className="max-w-md mx-auto text-[13px] text-ve-muted font-mono">
+          <div className="space-y-5">
+            <p className="max-w-md text-[13px] text-ve-muted font-mono">
               {data?.message || "Awaiting initialization..."}
             </p>
             {onStop && (
               <button
                 onClick={onStop}
-                className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-ve-muted border border-ve-border hover:border-ve-error hover:text-ve-error rounded-[4px] transition-colors flex items-center gap-2 mx-auto"
+                className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-ve-muted border border-ve-border hover:border-ve-error hover:text-ve-error rounded-[4px] transition-colors flex items-center gap-2"
               >
                 ^C Interrupt
               </button>
@@ -84,7 +84,7 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
       </div>
 
       {/* Progress bar */}
-      <div className="mb-10">
+      <div className="mb-6">
         <div className="flex items-center justify-between mb-2 px-1">
           <span className="text-[10px] font-mono uppercase tracking-widest text-ve-muted">Allocated Cache</span>
           <span className="text-[12px] font-mono text-ve-blue">
