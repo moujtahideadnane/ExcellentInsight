@@ -35,16 +35,25 @@ logger = structlog.get_logger()
 _CACHE_TTL = 3600
 
 
-async def _get_redis_conn(request: Request) -> redis.Redis:
-    """Get Redis connection from app state or create new one."""
+async def _get_redis_conn(request: Request) -> redis.Redis | None:
+    """Get Redis connection from app state (shared pool).
+
+    Returns None if Redis is unavailable. Callers should handle gracefully.
+    """
     redis_conn = getattr(request.app.state, "redis", None)
-    if redis_conn:
-        return redis_conn
-    return redis.from_url(settings.REDIS_URL, decode_responses=False)
+    if redis_conn is None:
+        logger.warning("dashboard_redis_unavailable", msg="Shared Redis pool unavailable for drill-down cache")
+    return redis_conn
 
 
-async def _get_drill_down_cache(redis_conn: redis.Redis, job_id: str, file_path: str) -> Optional[parser.ParsedData]:
-    """Retrieve parsed data from Redis cache."""
+async def _get_drill_down_cache(redis_conn: redis.Redis | None, job_id: str, file_path: str) -> Optional[parser.ParsedData]:
+    """Retrieve parsed data from Redis cache.
+
+    Returns None if cache miss, Redis unavailable, or error occurs.
+    """
+    if redis_conn is None:
+        return None
+
     try:
         # Generate cache key from job_id and file hash
         file_hash = hashlib.md5(file_path.encode()).hexdigest()[:8]
@@ -59,8 +68,15 @@ async def _get_drill_down_cache(redis_conn: redis.Redis, job_id: str, file_path:
     return None
 
 
-async def _set_drill_down_cache(redis_conn: redis.Redis, job_id: str, file_path: str, parsed_data: parser.ParsedData):
-    """Store parsed data in Redis cache."""
+async def _set_drill_down_cache(redis_conn: redis.Redis | None, job_id: str, file_path: str, parsed_data: parser.ParsedData):
+    """Store parsed data in Redis cache.
+
+    Silently skips if Redis is unavailable (cache is optional for functionality).
+    """
+    if redis_conn is None:
+        logger.debug("drill_down_cache_set_skipped", job_id=job_id, reason="redis_unavailable")
+        return
+
     try:
         file_hash = hashlib.md5(file_path.encode()).hexdigest()[:8]
         cache_key = f"drilldown:{job_id}:{file_hash}"
@@ -86,6 +102,12 @@ async def clear_drilldown_cache(
     """Clear Redis drill-down cache. If job_id provided, clear only that job. Otherwise clear all."""
     try:
         redis_conn = await _get_redis_conn(request)
+        if redis_conn is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Cache service temporarily unavailable"
+            )
+
         if job_id:
             # Clear specific job's cache entries
             pattern = f"drilldown:{job_id}:*"
@@ -537,10 +559,24 @@ async def export_pdf(
 
         logger.info("dashboard_pdf_exported", job_id=str(job_id), org_id=str(current_org_id))
 
+        # Generate ETag based on job completion time for caching
+        import hashlib
+        etag_source = f"{job_id}:{job.completed_at.isoformat() if job.completed_at else 'pending'}"
+        etag = f'"{hashlib.md5(etag_source.encode()).hexdigest()}"'
+
+        # Cache-Control: immutable for completed jobs (data never changes)
+        # CDN-friendly: allows CDN to cache exports for 1 year
+        cache_control = "public, max-age=31536000, immutable"
+
         return StreamingResponse(
             pdf_buffer,
             media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename=dashboard_{job_id}.pdf"},
+            headers={
+                "Content-Disposition": f"attachment; filename=dashboard_{job_id}.pdf",
+                "Cache-Control": cache_control,
+                "ETag": etag,
+                "X-CDN-Cache": "HIT" if settings.APP_ENV == "production" else "BYPASS",
+            },
         )
 
     except HTTPException:
@@ -580,10 +616,24 @@ async def export_excel(
 
         logger.info("dashboard_excel_exported", job_id=str(job_id), org_id=str(current_org_id))
 
+        # Generate ETag based on job completion time for caching
+        import hashlib
+        etag_source = f"{job_id}:{job.completed_at.isoformat() if job.completed_at else 'pending'}"
+        etag = f'"{hashlib.md5(etag_source.encode()).hexdigest()}"'
+
+        # Cache-Control: immutable for completed jobs (data never changes)
+        # CDN-friendly: allows CDN to cache exports for 1 year
+        cache_control = "public, max-age=31536000, immutable"
+
         return StreamingResponse(
             excel_buffer,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename=dashboard_{job_id}.xlsx"},
+            headers={
+                "Content-Disposition": f"attachment; filename=dashboard_{job_id}.xlsx",
+                "Cache-Control": cache_control,
+                "ETag": etag,
+                "X-CDN-Cache": "HIT" if settings.APP_ENV == "production" else "BYPASS",
+            },
         )
 
     except HTTPException:

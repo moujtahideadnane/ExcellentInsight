@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { motion } from 'framer-motion'
-import { Server, Clock, ArrowRight, Loader2, FileText, Plus, AlertTriangle } from 'lucide-react'
+import { Server, Clock, ArrowRight, FileText, Plus, AlertTriangle } from 'lucide-react'
 import { useJobStore } from '@/stores/job-store'
 import { cn } from '@/lib/utils'
 import { formatBytes } from '@/lib/format'
@@ -41,20 +41,33 @@ export default function JobsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error,     setError]     = useState<string | null>(null)
 
-  useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const res = await api.get('/jobs')
-        setJobs(res.data?.jobs ?? res.data ?? [])
-      } catch (err: unknown) {
-        const axiosErr = err as { response?: { data?: { detail?: string } } }
-        setError(axiosErr.response?.data?.detail || 'Failed to load process history')
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchJobs = async () => {
+    try {
+      const res = await api.get('/jobs')
+      setJobs(res.data?.jobs ?? res.data ?? [])
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } }
+      setError(axiosErr.response?.data?.detail || 'Failed to load process history')
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  // [Adding Auto-Polling for Active Operations]
+  useEffect(() => {
     fetchJobs()
   }, [])
+
+  useEffect(() => {
+    const hasActiveJobs = jobs.some(j => ['processing', 'pending', 'analyzing', 'enriching', 'parsing'].includes(j.status))
+    if (!hasActiveJobs) return
+
+    const intervalId = setInterval(() => {
+      fetchJobs()
+    }, 4000)
+
+    return () => clearInterval(intervalId)
+  }, [jobs])
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto min-h-full">
@@ -74,19 +87,52 @@ export default function JobsPage() {
         </p>
       </motion.div>
 
-      {/* Loading */}
+      {/* Loading Skeleton */}
       {isLoading && (
-        <div className="flex items-center justify-center py-32 gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-ve-blue" />
-          <span className="font-mono text-ve-muted text-[11px] uppercase tracking-widest">Querying database...</span>
+        <div className="grid grid-cols-1 gap-3">
+          {[...Array(5)].map((_, i) => (
+            <div 
+              key={`skeleton-${i}`} 
+              className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-[4px] bg-ve-bg border border-ve-border animate-pulse gap-4 sm:gap-0"
+            >
+              <div className="flex items-center gap-4 min-w-0 w-full sm:w-auto">
+                {/* Icon Skeleton */}
+                <div className="h-8 w-8 rounded-[4px] bg-ve-surface shrink-0" />
+                
+                <div className="min-w-0 flex-1 space-y-2">
+                  {/* Title Skeleton */}
+                  <div className="h-4 w-32 sm:w-48 bg-ve-surface rounded-[2px]" />
+                  
+                  {/* Subtitle/Time Skeleton */}
+                  <div className="h-3 w-24 sm:w-36 bg-ve-surface rounded-[2px]" />
+                </div>
+              </div>
+
+              {/* Status Badge Skeleton */}
+              <div className="h-5 w-20 bg-ve-surface rounded-[2px] shrink-0" />
+            </div>
+          ))}
         </div>
       )}
 
       {/* Error */}
+      {/* [Create Actionable Error States] */}
       {error && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-[4px] mb-6 bg-ve-error-bg border border-ve-error-border">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-ve-error" />
-          <p className="text-ve-error text-[12px] font-mono">{error}</p>
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-[4px] mb-6 bg-ve-error-bg border border-ve-error-border">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-ve-error" />
+            <p className="text-ve-error text-[12px] font-mono">{error}</p>
+          </div>
+          <button
+            onClick={() => {
+              setIsLoading(true)
+              setError(null)
+              fetchJobs()
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-ve-error text-ve-bg text-[11px] font-medium font-mono hover:opacity-90 transition-opacity"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -134,9 +180,10 @@ export default function JobsPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => isClickable && router.push(`/dashboard/${job.id}`)}
+                // [Adding Micro-Interactions & Tactility] added hover:-translate-y-[1px] hover:shadow-md
                 className={cn(
                   "group flex items-center justify-between p-4 rounded-[4px] transition-all bg-ve-bg border border-ve-border",
-                  isClickable ? "cursor-pointer hover:border-ve-muted" : "opacity-70 grayscale"
+                  isClickable ? "cursor-pointer hover:border-ve-muted hover:-translate-y-[1px] hover:shadow-md" : "opacity-70 grayscale"
                 )}
               >
                 <div className="flex items-center gap-4 min-w-0">

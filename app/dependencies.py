@@ -37,12 +37,24 @@ async def get_token(
     # verify token revocation, so we reject the request with 503 to avoid
     # allowing revoked tokens. In development we fail-open for convenience.
     try:
+        # Always use the shared Redis pool from app.state
         redis_conn = getattr(request.app.state, "redis", None)
-        _managed = False
-        if redis_conn is None:
-            redis_conn = redis.from_url(settings.REDIS_URL, decode_responses=False)
-            _managed = True
 
+        if redis_conn is None:
+            # Redis unavailable - fail based on environment
+            if settings.APP_ENV == "production":
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Authentication service temporarily unavailable. Please retry.",
+                )
+            # In development/staging: fail-open so Redis outages don't block local work
+            # Log warning and continue
+            import structlog
+            logger = structlog.get_logger()
+            logger.warning("token_validation_redis_unavailable", msg="Bypassing blocklist check in development")
+            return token
+
+        # Check if token is in blocklist
         is_blocked = await redis_conn.get(f"blocklist:{token}")
         if is_blocked:
             raise HTTPException(
@@ -51,19 +63,18 @@ async def get_token(
             )
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        # Unexpected error during Redis operation
+        import structlog
+        logger = structlog.get_logger()
+        logger.error("token_validation_redis_error", error=str(e))
+
         if settings.APP_ENV == "production":
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Authentication service temporarily unavailable. Please retry.",
             ) from None
         # In development/staging: fail-open so Redis outages don't block local work.
-    finally:
-        if "redis_conn" in locals() and _managed and redis_conn is not None:
-            try:
-                await redis_conn.aclose()
-            except Exception:
-                pass
 
     return token
 

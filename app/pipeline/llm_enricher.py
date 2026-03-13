@@ -890,8 +890,10 @@ async def enrich_data(
 
     # Sub-pipeline hints (e.g. ['financial_transactions'])
     subpipeline_types = options.get("subpipeline_types") or []
-    client = OpenRouterClient()
-    logger.info("Calling LLM API", subpipelines=subpipeline_types)
+    # Get tenant_id from options for per-tenant circuit breaker isolation
+    tenant_id = options.get("tenant_id", "default")
+    client = OpenRouterClient(tenant_id=tenant_id)
+    logger.info("Calling LLM API", subpipelines=subpipeline_types, tenant_id=tenant_id)
 
     # Prepare compact context for LLM
     schema_summary = []
@@ -1266,7 +1268,8 @@ This helps validate your suggestions are based on actual data, not hallucination
 
     data = response.parsed_json
 
-    # Advanced validation layer to catch hallucinations
+    # Unified validation pipeline: combines advanced validation with schema-based filtering
+    # Previously had two sequential validation layers that could miss errors; now a single pass
     try:
         data, validation_errors = validate_llm_output(data, schema, stats_by_sheet=stats_by_sheet)
         if validation_errors:
@@ -1287,10 +1290,8 @@ This helps validate your suggestions are based on actual data, not hallucination
                     field=error.field,
                 )
     except Exception:
-        logger.exception("Advanced validation failed, falling back to basic validation")
-
-    # Validate and filter LLM response (pass stats for cardinality guard)
-    data = validate_and_filter_llm_response(data, schema, stats_by_sheet=stats_by_sheet)
+        logger.exception("Unified validation pipeline failed; using unvalidated data (risky)")
+        # Note: We no longer fall back to validate_and_filter_llm_response since it's now integrated
 
     # Core fix: Use Pydantic's model_validate to handle defaults and extra fields automatically
     result = LLMEnrichment.model_validate(data)

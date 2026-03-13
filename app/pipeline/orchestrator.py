@@ -59,6 +59,47 @@ async def publish_progress(
     await redis_conn.publish(f"job:{job_id}:progress", json.dumps(data))
 
 
+async def flush_step_telemetry(db, context: PipelineContext, job_uuid: uuid.UUID) -> None:
+    """Flush telemetry for completed steps to database and clear from context.
+
+    This prevents context bloat and ensures telemetry is persisted incrementally
+    rather than all at once at the end (which could be lost on crashes).
+
+    Args:
+        db: Database session
+        context: Pipeline context with telemetry to flush
+        job_uuid: Job UUID for telemetry records
+    """
+    if not context.telemetry:
+        return
+
+    telemetry_count = len(context.telemetry)
+
+    for t in context.telemetry:
+        telemetry_row = PipelineTelemetry(
+            job_id=job_uuid,
+            step_name=t.step_name,
+            started_at=t.started_at,
+            completed_at=t.completed_at,
+            duration_ms=t.duration_ms,
+            rows_processed=t.rows_processed,
+            columns_processed=t.columns_processed,
+            data_size_bytes=t.data_size_bytes,
+            error=t.error,
+        )
+        db.add(telemetry_row)
+
+    try:
+        await db.commit()
+        # Clear flushed telemetry from context to reduce memory footprint
+        context.telemetry.clear()
+        logger.debug("Flushed step telemetry to DB", job_id=str(job_uuid), count=telemetry_count)
+    except Exception as e:
+        await db.rollback()
+        logger.warning("Failed to flush telemetry", job_id=str(job_uuid), error=str(e))
+        # Keep telemetry in context for retry at end of pipeline
+
+
 # ``json_ready`` was previously used as a loose helper for serialisation.
 # we keep it around as an alias for backwards compatibility but the main
 # implementation has moved to ``serialize_for_db`` in ``app/db/serialization``.
@@ -71,6 +112,10 @@ def json_ready(data: Any) -> Any:
 async def run_analysis_pipeline(ctx: dict, job_id: str, from_step: str = None, step_options: dict = None) -> None:
     logger.info("Starting pipeline", job_id=job_id, from_step=from_step)
     start_time = datetime.now(timezone.utc)
+
+    # NOTE: Workers run in separate ARQ processes, so they cannot use app.state.redis.
+    # Each worker creates its own Redis connection for pub/sub progress updates.
+    # This connection is properly closed in the finally block below.
     redis_conn = redis.from_url(settings.REDIS_URL)
 
     async with async_session_factory() as db:
@@ -298,6 +343,8 @@ async def run_analysis_pipeline(ctx: dict, job_id: str, from_step: str = None, s
                             # Attach any per-step options, e.g., prompt hints for the LLM step.
                             llm_opts = context.step_options.get("llm", {})
                             llm_opts.setdefault("subpipeline_types", context.active_subpipelines)
+                            # Pass tenant_id for per-tenant circuit breaker isolation
+                            llm_opts.setdefault("tenant_id", str(initial_job.org_id) if initial_job else "default")
                             context.step_options["llm"] = llm_opts
                             logger.info(
                                 "Sub-pipelines selected",
@@ -330,6 +377,10 @@ async def run_analysis_pipeline(ctx: dict, job_id: str, from_step: str = None, s
 
                 await commit_or_rollback()
 
+                # Flush telemetry after each step to DB and clear from context
+                # This prevents context bloat and ensures incremental persistence
+                await flush_step_telemetry(db, context, job_uuid)
+
                 if await check_cancellation():
                     return
 
@@ -358,20 +409,9 @@ async def run_analysis_pipeline(ctx: dict, job_id: str, from_step: str = None, s
                 )
             )
 
-            # Persist Telemetry
-            for t in context.telemetry:
-                telemetry_row = PipelineTelemetry(
-                    job_id=job_uuid,
-                    step_name=t.step_name,
-                    started_at=t.started_at,
-                    completed_at=t.completed_at,
-                    duration_ms=t.duration_ms,
-                    rows_processed=t.rows_processed,
-                    columns_processed=t.columns_processed,
-                    data_size_bytes=t.data_size_bytes,
-                    error=t.error,
-                )
-                db.add(telemetry_row)
+            # Flush any remaining telemetry (should be empty if all steps flushed successfully)
+            # This is a safety net for any telemetry that failed to flush during step execution
+            await flush_step_telemetry(db, context, job_uuid)
 
             await commit_or_rollback()
             await publish_progress(redis_conn, job_id, JobStatus.DONE, 100, "Dashboard ready!", processing_time_ms)

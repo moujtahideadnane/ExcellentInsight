@@ -79,27 +79,35 @@ async def logout(request: Request, token: str = Depends(get_token)):
     """
     import time
 
+    import structlog
+
     from app.config import get_settings
     from app.utils.security import decode_token
 
     settings = get_settings()
+    logger = structlog.get_logger()
+
     try:
         payload = decode_token(token)
         exp = payload.get("exp", 0)
         ttl = max(int(exp - time.time()), 1)
 
-        # Use shared redis pool
+        # Always use the shared Redis pool from app.state
         r = getattr(request.app.state, "redis", None)
-        _managed = False
-        if not r:
-            import redis.asyncio as aioredis
 
-            r = aioredis.from_url(settings.REDIS_URL, decode_responses=False)
-            _managed = True
+        if r is None:
+            # Redis unavailable - log warning but allow logout to succeed
+            logger.warning(
+                "logout_redis_unavailable",
+                msg="Cannot blocklist token due to Redis unavailability. Token will remain valid until expiry."
+            )
+            # Logout should always succeed from the client's perspective
+            return
 
         await r.setex(f"blocklist:{token}", ttl, "1")
-        if _managed:
-            await r.aclose()
-    except Exception:
+        logger.debug("token_blocklisted", ttl=ttl)
+
+    except Exception as e:
         # Logout should always succeed from the client's perspective
-        pass
+        # but log the error for monitoring
+        logger.error("logout_blocklist_failed", error=str(e))

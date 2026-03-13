@@ -769,16 +769,20 @@ def validate_llm_output(
     schema: DetectedSchema,
     stats_by_sheet: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Tuple[Dict[str, Any], List[ValidationError]]:
-    """Run all validation checks on LLM output.
+    """Run all validation checks on LLM output in a unified pipeline.
+
+    This is the single validation entry point that combines advanced validation
+    with schema-based filtering. Previously two separate validation functions ran
+    sequentially, where the second could miss errors from the first.
 
     Returns:
         Tuple of (cleaned_data, all_errors)
-        - cleaned_data: Data with critical errors removed, high errors flagged
-        - all_errors: List of all validation errors found
+        - cleaned_data: Data with critical errors removed and corrected where possible
+        - all_errors: List of all validation errors found (for reporting/telemetry)
     """
     all_errors: List[ValidationError] = []
 
-    # Run all validation checks
+    # Phase 1: Advanced validation checks (structural, semantic, syntactic)
     all_errors.extend(validate_schema_references(data, schema))
     all_errors.extend(validate_formulas(data, schema))
     all_errors.extend(validate_aggregations(data, schema, stats_by_sheet))
@@ -786,7 +790,7 @@ def validate_llm_output(
     all_errors.extend(validate_joins(data, schema))
     all_errors.extend(validate_semantic_quality(data))
 
-    # Log errors
+    # Log structured error report
     critical_count = sum(1 for e in all_errors if e.severity == "critical")
     high_count = sum(1 for e in all_errors if e.severity == "high")
     medium_count = sum(1 for e in all_errors if e.severity == "medium")
@@ -801,10 +805,153 @@ def validate_llm_output(
         total=len(all_errors),
     )
 
-    # Remove items with critical errors
-    cleaned_data = _remove_critical_errors(data, all_errors)
+    # Phase 2: Apply schema-based corrections and filtering
+    # This integrates logic from validate_and_filter_llm_response to ensure
+    # a single pass through all data with consistent error tracking
+    cleaned_data = _apply_corrections_and_filters(data, schema, stats_by_sheet, all_errors)
 
     return cleaned_data, all_errors
+
+
+def _apply_corrections_and_filters(
+    data: Dict[str, Any],
+    schema: DetectedSchema,
+    stats_by_sheet: Optional[Dict[str, Dict[str, Any]]],
+    errors: List[ValidationError],
+) -> Dict[str, Any]:
+    """Apply corrections and filtering in a single unified pass.
+
+    This combines the logic from the old validate_and_filter_llm_response function
+    with critical error removal, ensuring consistency and preventing errors from
+    being missed between validation passes.
+
+    Args:
+        data: Raw LLM output data
+        schema: Detected schema for validation
+        stats_by_sheet: Column statistics for cardinality checks
+        errors: Validation errors already detected (used for filtering)
+
+    Returns:
+        Cleaned and corrected data
+    """
+    from app.pipeline.llm_enricher import (
+        _infer_join_keys,
+        _deduplicate_kpis_by_formula,
+        validate_kpi,
+        validate_chart,
+    )
+
+    # Collect all valid sheets and columns from schema
+    all_sheets = {sheet.name for sheet in schema.sheets}
+    sheet_columns = {sheet.name: {col.name for col in sheet.columns} for sheet in schema.sheets}
+
+    # Track items with critical errors for removal
+    critical_fields = {e.field for e in errors if e.severity == "critical" and e.field}
+
+    # Helper: coerce sentinel values like "none", "null" to actual None
+    def _coerce_none_sentinel(v: Any) -> Any:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s in {"none", "null", "nil", "n/a", "na", ""}:
+                return None
+        return v
+
+    # === Process Joins ===
+    valid_joins = []
+    for join in data.get("joins", []) or []:
+        if not isinstance(join, dict):
+            continue
+
+        left_sheet = join.get("left_sheet", "")
+        right_sheet = join.get("right_sheet", "")
+
+        # Skip joins with critical errors
+        if any(f"joins.{left_sheet}+{right_sheet}" in field for field in critical_fields):
+            logger.warning(f"Removing join '{left_sheet}+{right_sheet}' due to critical validation errors")
+            continue
+
+        # Normalize join_type -> how
+        if join.get("how") is None and join.get("join_type") is not None:
+            join["how"] = join["join_type"]
+
+        # Infer join keys if missing
+        if not join.get("on") and not (join.get("left_on") and join.get("right_on")):
+            _infer_join_keys(join, schema)
+
+        # Only keep joins with resolved keys
+        if join.get("on") or (join.get("left_on") and join.get("right_on")):
+            valid_joins.append(join)
+        else:
+            logger.warning(
+                "Dropping join with unresolved keys", left=join.get("left_sheet"), right=join.get("right_sheet")
+            )
+
+    data["joins"] = valid_joins
+
+    # === Process Charts ===
+    # Sanitize sentinel values and check cardinality before validation
+    for chart in data.get("charts", []) or []:
+        if not isinstance(chart, dict):
+            continue
+
+        chart["split_by"] = _coerce_none_sentinel(chart.get("split_by"))
+
+        # Cardinality guard: drop split_by when column has too many distinct values
+        if chart.get("split_by") and stats_by_sheet:
+            sheet = chart.get("sheet", "")
+            split_col = chart["split_by"]
+            col_stat = (stats_by_sheet.get(sheet) or {}).get(split_col)
+            if col_stat is not None:
+                unique_count = getattr(col_stat, "unique_count", None)
+                if unique_count is not None and unique_count > 15:
+                    logger.warning(
+                        "Dropping high-cardinality split_by",
+                        chart=chart.get("title"),
+                        column=split_col,
+                        unique_count=unique_count,
+                    )
+                    chart["split_by"] = None
+
+    # Validate and filter charts
+    valid_charts = []
+    for chart in data.get("charts", []):
+        title = chart.get("title", "untitled")
+
+        # Skip charts with critical errors
+        if any(f"charts.{title}" in field for field in critical_fields):
+            logger.warning(f"Removing chart '{title}' due to critical validation errors")
+            continue
+
+        if validate_chart(chart, all_sheets, sheet_columns):
+            valid_charts.append(chart)
+        else:
+            logger.warning(f"Removing invalid chart: {title}")
+
+    # === Process KPIs ===
+    valid_kpis = []
+    for kpi in data.get("kpis", []):
+        label = kpi.get("label", "unnamed")
+
+        # Skip KPIs with critical errors
+        if any(f"kpis.{label}" in field for field in critical_fields):
+            logger.warning(f"Removing KPI '{label}' due to critical validation errors")
+            continue
+
+        if validate_kpi(kpi, all_sheets, sheet_columns):
+            valid_kpis.append(kpi)
+        else:
+            logger.warning(f"Removing invalid KPI: {label}")
+
+    # Deduplicate: same formula with different titles -> keep one (prefer higher priority)
+    valid_kpis = _deduplicate_kpis_by_formula(valid_kpis)
+
+    # Update data with validated and corrected items
+    data["kpis"] = valid_kpis
+    data["charts"] = valid_charts
+
+    return data
 
 
 def _remove_critical_errors(

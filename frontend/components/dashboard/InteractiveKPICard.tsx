@@ -38,9 +38,22 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
     e.stopPropagation()
     if (!onUpdateFormula) return
     setIsSaving(true)
+    
+    // [Optimistic UI Updates] Save the original formula in case of failure
+    const previousFormula = kpi.formula
+
     try {
-      await onUpdateFormula(editFormula)
+      // Optimistically assume success and close the editor
       setIsEditing(false)
+      kpi.formula = editFormula
+
+      await onUpdateFormula(editFormula)
+    } catch (error) {
+       // Revert on failure
+       console.error('Failed to update KPI formula:', error)
+       kpi.formula = previousFormula
+       setEditFormula(previousFormula || '')
+       setIsEditing(true) // Re-open the editor
     } finally {
       setIsSaving(false)
     }
@@ -52,6 +65,7 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
 
     setIsDeleting(true)
     try {
+      // [Optimistic UI Updates] State lift will be handled by parent, but we show loading locally
       await onDelete()
     } catch (error) {
       console.error('Failed to delete KPI:', error)
@@ -85,8 +99,9 @@ export default function InteractiveKPICard({ kpi, index, onUpdateFormula, onDele
         transition={{ duration: 0.4, type: 'spring', stiffness: 300, damping: 25 }}
       >
         {/* Front Side */}
+        {/* [Adding Micro-Interactions & Tactility] added hover:-translate-y-[2px] hover:shadow-md */}
         <div className="absolute inset-0 backface-hidden">
-          <div className="rounded-[6px] p-5 flex flex-col h-full gap-4 bg-ve-surface border border-ve-border hover:border-ve-muted transition-colors relative overflow-hidden">
+          <div className="rounded-[6px] p-5 flex flex-col h-full gap-4 bg-ve-surface border border-ve-border hover:border-ve-muted hover:-translate-y-[2px] hover:shadow-md transition-all relative overflow-hidden">
             
             {/* Header */}
             <div className="flex items-start justify-between gap-2 z-10">

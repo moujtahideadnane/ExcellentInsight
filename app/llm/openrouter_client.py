@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+from typing import Dict
 
 import httpx
 import structlog
@@ -12,21 +13,48 @@ from app.utils.circuit_breaker import CircuitBreaker, with_timeout
 settings = get_settings()
 logger = structlog.get_logger()
 
-# Global circuit breaker for LLM calls
+# Per-tenant circuit breakers for LLM calls to prevent cross-tenant failure cascades
 # Opens after 5 consecutive failures, recovers after 60 seconds
-_llm_circuit_breaker = CircuitBreaker(
-    failure_threshold=5,
-    recovery_timeout=60.0,
-    expected_exception=Exception,
-    name="openrouter_llm",
-)
+_llm_circuit_breakers: Dict[str, CircuitBreaker] = {}
 
 
-def repair_json(content: str) -> str:
-    """Attempts to repair truncated JSON by closing brackets/braces."""
+def _get_circuit_breaker(tenant_id: str = "default") -> CircuitBreaker:
+    """Get or create circuit breaker for a specific tenant.
+
+    Args:
+        tenant_id: Organization/tenant identifier. Defaults to 'default' for backward compatibility.
+
+    Returns:
+        CircuitBreaker instance for the tenant
+    """
+    if tenant_id not in _llm_circuit_breakers:
+        _llm_circuit_breakers[tenant_id] = CircuitBreaker(
+            failure_threshold=5,
+            recovery_timeout=60.0,
+            expected_exception=Exception,
+            name=f"openrouter_llm_{tenant_id}",
+        )
+    return _llm_circuit_breakers[tenant_id]
+
+
+def repair_json(content: str, max_repairs: int = 20) -> str:
+    """Attempts to repair truncated JSON by closing brackets/braces with security limits.
+
+    Args:
+        content: JSON string to repair
+        max_repairs: Maximum number of brackets/braces to add (security limit)
+
+    Returns:
+        Repaired JSON string or original if repair fails
+    """
     content = content.strip()
     if not content:
         return "{}"
+
+    # Security: Reject extremely nested structures (potential DoS)
+    if content.count("{") + content.count("[") > 1000:
+        logger.warning("JSON repair rejected: too many nesting levels", count=content.count("{") + content.count("["))
+        return content
 
     # Remove trailing incomplete key/value or comma
     content = re.sub(r',?\s*["\w]*\s*:?\s*$', "", content)
@@ -34,6 +62,17 @@ def repair_json(content: str) -> str:
     # Count open/close brackets
     braces = content.count("{") - content.count("}")
     brackets = content.count("[") - content.count("]")
+
+    # Security: Limit total repairs to prevent resource exhaustion
+    total_repairs = braces + brackets
+    if total_repairs > max_repairs:
+        logger.warning(
+            "JSON repair rejected: too many repairs needed",
+            braces=braces,
+            brackets=brackets,
+            max_repairs=max_repairs,
+        )
+        return content
 
     # Close them in reverse order
     repair = content
@@ -45,7 +84,11 @@ def repair_json(content: str) -> str:
         repair += "}" * braces
 
     try:
-        json.loads(repair)
+        parsed = json.loads(repair)
+        # Security: Validate structure after repair
+        if not isinstance(parsed, dict):
+            logger.warning("JSON repair produced non-dict result", type=type(parsed).__name__)
+            return content
         return repair
     except Exception:
         # If still failing, try a more aggressive approach: find last '}' or ']'
@@ -58,19 +101,30 @@ def repair_json(content: str) -> str:
             # Check if it needs more closing (e.g. outer object)
             braces_sub = sub_content.count("{") - sub_content.count("}")
             brackets_sub = sub_content.count("[") - sub_content.count("]")
-            sub_content += "]" * brackets_sub
-            sub_content += "}" * braces_sub
-            try:
-                json.loads(sub_content)
-                return sub_content
-            except Exception:
-                pass
+
+            # Security check on sub-content repairs
+            if braces_sub + brackets_sub <= max_repairs:
+                sub_content += "]" * brackets_sub
+                sub_content += "}" * braces_sub
+                try:
+                    parsed = json.loads(sub_content)
+                    # Security: Validate structure
+                    if isinstance(parsed, dict):
+                        return sub_content
+                except Exception:
+                    pass
 
     return content
 
 
 class OpenRouterClient(LLMClient):
-    def __init__(self):
+    def __init__(self, tenant_id: str = "default"):
+        """Initialize OpenRouter client.
+
+        Args:
+            tenant_id: Organization/tenant identifier for circuit breaker isolation.
+                      Defaults to 'default' for backward compatibility.
+        """
         self.api_key = settings.OPENROUTER_API_KEY
         base = settings.OPENROUTER_BASE_URL.rstrip("/")
         if base.endswith("/chat/completions"):
@@ -79,19 +133,21 @@ class OpenRouterClient(LLMClient):
             self.base_url = f"{base}/chat/completions"
         self.model = settings.LLM_MODEL
         self.fallback_model = settings.LLM_FALLBACK_MODEL
+        self.tenant_id = tenant_id
 
     async def complete(self, prompt: str, system_prompt: str = "") -> LLMResponse:
-        """Complete LLM request with circuit breaker and timeout protection.
+        """Complete LLM request with per-tenant circuit breaker and timeout protection.
 
         Raises:
             CircuitBreakerOpen: If circuit breaker is open due to previous failures
-            TimeoutError: If request exceeds 30 second timeout
+            TimeoutError: If request exceeds 540 second timeout
             Exception: Other errors from LLM API
         """
-        # Use circuit breaker to prevent cascading failures
-        return await _llm_circuit_breaker.call(self._complete_internal, prompt, system_prompt)
+        # Use per-tenant circuit breaker to prevent cross-tenant failure cascades
+        circuit_breaker = _get_circuit_breaker(self.tenant_id)
+        return await circuit_breaker.call(self._complete_internal, prompt, system_prompt)
 
-    @with_timeout(300.0)  # 30 second timeout for LLM calls
+    @with_timeout(540.0)  # 9 minute timeout for LLM calls (aligned with httpx timeout below)
     async def _complete_internal(self, prompt: str, system_prompt: str = "") -> LLMResponse:
         """Internal completion method with timeout protection."""
         headers = {
@@ -110,7 +166,7 @@ class OpenRouterClient(LLMClient):
             "response_format": {"type": "json_object"},
         }
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(540.0, connect=10.0)) as client:
             max_retries = 3
             last_error = None
 

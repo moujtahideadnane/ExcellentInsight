@@ -88,6 +88,11 @@ app = FastAPI(
 # Request ID middleware (first to set request.state.request_id)
 app.add_middleware(RequestIDMiddleware)
 
+# Response Compression (gzip/brotli) - add early in chain for maximum benefit
+from app.middleware.compression import CompressionMiddleware
+
+app.add_middleware(CompressionMiddleware, min_size=500)
+
 # Error Handler (catches unhandled errors and returns standardized envelope)
 app.add_middleware(ErrorHandlerMiddleware)
 
@@ -101,6 +106,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["ETag", "X-Request-ID"],  # Allow frontend to read these headers
 )
 
 # API Router
@@ -129,7 +135,26 @@ async def health_check():
         r = getattr(app.state, "redis", None)
         if r:
             await r.ping()
-            result["redis"] = "ok"
+            # Get connection pool info for monitoring
+            pool_info = {}
+            try:
+                # Try to get pool statistics if available
+                if hasattr(r, "connection_pool"):
+                    pool = r.connection_pool
+                    # Get current pool state
+                    pool_info = {
+                        "max_connections": getattr(pool, "max_connections", "N/A"),
+                        "available_connections": len(getattr(pool, "_available_connections", [])),
+                        "in_use_connections": len(getattr(pool, "_in_use_connections", set())),
+                    }
+            except Exception:
+                # Pool introspection failed, skip detailed metrics
+                pass
+
+            result["redis"] = {
+                "status": "ok",
+                "pool": pool_info if pool_info else "metrics_unavailable"
+            }
         else:
             result["redis"] = "unavailable"
             result["status"] = "degraded"
@@ -137,8 +162,30 @@ async def health_check():
         result["redis"] = f"error: {str(e)}"
         result["status"] = "degraded"
 
-    # Check arq pool
-    result["arq_pool"] = "ok" if getattr(app.state, "arq_pool", None) else "unavailable"
+    # Check arq pool and queue depth
+    arq_pool_available = getattr(app.state, "arq_pool", None)
+    if arq_pool_available:
+        result["arq_pool"] = "ok"
+        # Get queue depth for monitoring and dynamic scaling
+        try:
+            from app.workers.queue_config import get_dynamic_max_jobs, get_queue_depth
+
+            r = getattr(app.state, "redis", None)
+            if r:
+                queue_depth = await get_queue_depth(r)
+                recommended_max_jobs = get_dynamic_max_jobs(queue_depth)
+
+                result["queue"] = {
+                    "depth": queue_depth,
+                    "current_max_jobs": settings.ARQ_MAX_JOBS,
+                    "recommended_max_jobs": recommended_max_jobs,
+                    "scaling_needed": recommended_max_jobs != settings.ARQ_MAX_JOBS
+                }
+        except Exception as e:
+            logger.warning("queue_depth_check_failed", error=str(e))
+            result["queue"] = "metrics_unavailable"
+    else:
+        result["arq_pool"] = "unavailable"
 
     status_code = 200 if result["status"] == "ok" else 503
     return JSONResponse(content=result, status_code=status_code)

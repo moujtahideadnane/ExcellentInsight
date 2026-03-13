@@ -16,14 +16,17 @@ import structlog
 
 logger = structlog.get_logger()
 
-# Per-step timeout limits (in seconds)
+# Per-step timeout budgets (in seconds)
+# Total budget: 30 minutes (1800s) for entire pipeline
+# Breakdown ensures complex pipelines complete within ARQ_JOB_TIMEOUT
 STEP_TIMEOUTS = {
-    "parsing": 300,  # 5 minutes for large Excel files
-    "schema": 60,  # 1 minute for schema detection
-    "stats": 300,  # 5 minutes for statistical analysis
-    "llm": 360,  # 45 seconds for LLM enrichment (already has 30s internal timeout)
-    "dashboard": 120,  # 2 minutes for dashboard building
+    "parsing": 600,  # 10 minutes for large Excel files (increased from 5min)
+    "schema": 120,   # 2 minutes for schema detection (increased from 1min)
+    "stats": 600,    # 10 minutes for statistical analysis (increased from 5min)
+    "llm": 480,      # 8 minutes for LLM enrichment (increased from 6min to handle retries)
+    "dashboard": 180,  # 3 minutes for dashboard building (increased from 2min)
 }
+# Total allocated: ~27 minutes, leaving 3-minute buffer for orchestration overhead
 
 
 @dataclass

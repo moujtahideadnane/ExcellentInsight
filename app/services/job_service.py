@@ -107,14 +107,45 @@ class JobService:
         db.add(job)
         await db.flush()  # Ensure row is valid before enqueue
 
-        # 4. Enqueue background task
+        # 4. Enqueue background task with priority based on organization plan
         _managed_pool = False
         try:
             if not arq_pool:
                 arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
                 _managed_pool = True
 
-            await arq_pool.enqueue_job("run_analysis_pipeline", str(job.id))
+            # Get organization plan to determine job priority
+            from app.models.organization import Organization
+            from sqlalchemy import select
+
+            org_result = await db.execute(select(Organization).where(Organization.id == org_id))
+            org = org_result.scalar_one_or_none()
+            org_plan = org.plan if org else "free"
+
+            # Calculate priority score for queue ordering
+            from app.workers.queue_config import get_job_priority
+            priority = get_job_priority(org_plan)
+
+            # Enqueue job with priority
+            # ARQ doesn't support native priority, but we use defer_by as a workaround:
+            # Higher priority = lower defer time (processed sooner)
+            # Priority 3 (premium): defer_by=0, Priority 2 (pro): defer_by=1, Priority 1 (free): defer_by=2
+            defer_seconds = max(0, 3 - priority)
+
+            await arq_pool.enqueue_job(
+                "run_analysis_pipeline",
+                str(job.id),
+                _defer_by=defer_seconds if defer_seconds > 0 else None
+            )
+
+            logger.info(
+                "job_enqueued_with_priority",
+                job_id=str(job_id),
+                org_plan=org_plan,
+                priority=priority,
+                defer_by=defer_seconds
+            )
+
         except Exception as exc:
             logger.error("Failed to enqueue pipeline job", job_id=str(job_id), error=str(exc))
             await db.rollback()

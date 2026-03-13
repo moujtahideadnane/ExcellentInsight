@@ -18,8 +18,8 @@ class Settings(BaseSettings):
 
     # ── Database ──
     DATABASE_URL: str
-    DB_POOL_SIZE: int = 10
-    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_SIZE: int = 25  # Increased from 10 to handle concurrent workers + API requests
+    DB_MAX_OVERFLOW: int = 35  # Increased from 20 to prevent pool exhaustion
 
     # ── Redis ──
     REDIS_URL: str = "redis://localhost:6379"
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     # ── ARQ Worker ──
     ARQ_MAX_JOBS: int = 5
-    ARQ_JOB_TIMEOUT: int = 900  # 15 minutes
+    ARQ_JOB_TIMEOUT: int = 1800  # 30 minutes (increased from 15min for complex pipelines)
     ARQ_RESULT_TTL: int = 3600  # 1 hour
 
 

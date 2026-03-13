@@ -35,10 +35,11 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
     responses={**RESPONSES_400, **RESPONSES_401},
 )
 async def list_jobs(
+    request: Request,
     current_org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_rls_db),
     limit: int = Query(20, le=100, description="Number of jobs to return (max 100)"),
-    cursor: Optional[str] = Query(None, description="Cursor for pagination (ISO timestamp from last job)"),
+    cursor: Optional[str] = Query(None, description="Base64-encoded cursor for pagination"),
     status_filter: Optional[str] = Query(
         None, alias="status", description="Filter by status (e.g. done, failed, pending)"
     ),
@@ -48,8 +49,16 @@ async def list_jobs(
     Cursor-based pagination is more efficient than offset-based for large datasets
     and prevents issues with duplicate/missing items when data changes.
 
-    The cursor is the created_at timestamp of the last job in the previous page.
+    Features:
+    - Base64-encoded cursors (opaque, forward-compatible)
+    - ETag support for cache validation
+    - Conditional requests (If-None-Match)
+
+    The cursor is a base64-encoded ISO timestamp of the last job's created_at.
     """
+    import base64
+    import hashlib
+
     base_query = tenant_query(AnalysisJob, current_org_id)
     filters = []
 
@@ -66,17 +75,23 @@ async def list_jobs(
                 detail=f"Invalid status '{status_filter}'. Valid values: {[s.value for s in JobStatus]}",
             ) from None
 
-    # Apply cursor-based pagination
+    # Apply cursor-based pagination with base64 encoding
     if cursor:
         try:
-            # Parse ISO timestamp cursor
-            cursor_dt = datetime.fromisoformat(cursor.replace("Z", "+00:00"))
+            # Decode base64 cursor to get ISO timestamp
+            decoded_cursor = base64.urlsafe_b64decode(cursor.encode()).decode()
+            cursor_dt = datetime.fromisoformat(decoded_cursor.replace("Z", "+00:00"))
             filters.append(AnalysisJob.created_at < cursor_dt)
-        except (ValueError, AttributeError):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid cursor format. Expected ISO timestamp, got: {cursor}",
-            ) from None
+        except (ValueError, AttributeError, Exception):
+            # Fallback: try to parse as raw ISO timestamp for backward compatibility
+            try:
+                cursor_dt = datetime.fromisoformat(cursor.replace("Z", "+00:00"))
+                filters.append(AnalysisJob.created_at < cursor_dt)
+            except (ValueError, AttributeError):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid cursor format. Expected base64-encoded timestamp.",
+                ) from None
 
     # Count total for UI (can be expensive - consider caching or removing for very large datasets)
     count_query = (
@@ -99,12 +114,47 @@ async def list_jobs(
     if has_more:
         jobs = jobs[:limit]  # Remove the extra item
 
-    # Generate next cursor from the last job's created_at
+    # Generate next cursor from the last job's created_at (base64-encoded)
     next_cursor = None
     if has_more and jobs:
-        next_cursor = jobs[-1].created_at.isoformat()
+        # Encode cursor as base64 for opacity and forward compatibility
+        iso_timestamp = jobs[-1].created_at.isoformat()
+        next_cursor = base64.urlsafe_b64encode(iso_timestamp.encode()).decode()
 
-    return {"jobs": jobs, "total": total or 0, "limit": limit, "cursor": next_cursor, "has_more": has_more}
+    # Generate ETag for cache validation
+    # ETag is based on: org_id, status_filter, first job ID, last job ID, total count
+    # This ensures cache invalidation when data changes
+    etag_components = [
+        str(current_org_id),
+        status_filter or "all",
+        str(jobs[0].id) if jobs else "empty",
+        str(jobs[-1].id) if jobs else "empty",
+        str(total),
+    ]
+    etag_source = ":".join(etag_components)
+    etag = f'"{hashlib.md5(etag_source.encode()).hexdigest()}"'
+
+    # Check If-None-Match header for conditional requests
+    if_none_match = request.headers.get("If-None-Match")
+    if if_none_match == etag:
+        # Data hasn't changed, return 304 Not Modified
+        from fastapi.responses import Response
+        return Response(status_code=304, headers={"ETag": etag})
+
+    # Return response with ETag header
+    response_data = {
+        "jobs": jobs,
+        "total": total or 0,
+        "limit": limit,
+        "cursor": next_cursor,
+        "has_more": has_more
+    }
+
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content=response_data,
+        headers={"ETag": etag, "Cache-Control": "private, max-age=10"}
+    )
 
 
 @router.get(
@@ -154,22 +204,19 @@ async def job_progress(
             return
 
         # --- Subscribe to Redis pub/sub for live updates ---
+        # Always use the shared Redis pool from app.state
         redis_node = getattr(request.app.state, "redis", None)
-        _managed_conn = False
+
         if not redis_node:
-            try:
-                redis_node = redis.from_url(settings.REDIS_URL)
-                _managed_conn = True
-            except Exception as e:
-                logger.error("redis_connection_failed", job_id=str(job_id), error=str(e))
-                # If Redis fails, still yield a warning but don't crash
-                error_state = {
-                    "status": "warning",
-                    "message": "Live updates unavailable, but job is processing",
-                    "progress": job.progress or 0,
-                }
-                yield f"data: {json.dumps(error_state)}\n\n"
-                return
+            logger.error("sse_redis_unavailable", job_id=str(job_id), msg="Shared Redis pool unavailable for SSE")
+            # If Redis is unavailable, still yield a warning but don't crash
+            error_state = {
+                "status": "warning",
+                "message": "Live updates unavailable, but job is processing",
+                "progress": job.progress or 0,
+            }
+            yield f"data: {json.dumps(error_state)}\n\n"
+            return
 
         try:
             pubsub = redis_node.pubsub(ignore_subscribe_messages=True)
@@ -183,8 +230,6 @@ async def job_progress(
                 "progress": job.progress or 0,
             }
             yield f"data: {json.dumps(error_state)}\n\n"
-            if _managed_conn:
-                await redis_node.aclose()
             return
 
         last_heartbeat = asyncio.get_event_loop().time()
@@ -220,16 +265,12 @@ async def job_progress(
                     yield f"data: {json.dumps(error_state)}\n\n"
                     break
         finally:
+            # Clean up pubsub subscription (but NOT the shared Redis connection)
             try:
                 await pubsub.unsubscribe(channel)
                 await pubsub.aclose()
             except Exception as e:
                 logger.warning("pubsub_cleanup_error", job_id=str(job_id), error=str(e))
-            if _managed_conn:
-                try:
-                    await redis_node.aclose()
-                except Exception as e:
-                    logger.warning("redis_cleanup_error", job_id=str(job_id), error=str(e))
 
     return StreamingResponse(
         event_generator(),

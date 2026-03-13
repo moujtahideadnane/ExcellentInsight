@@ -20,6 +20,9 @@ logger = structlog.get_logger()
 # ── Slow query threshold (ms) ────────────────────────────────────────────────
 SLOW_QUERY_THRESHOLD_MS = 500
 
+# ── Connection pool monitoring threshold (seconds) ────────────────────────────
+POOL_CHECKOUT_THRESHOLD_SECONDS = 2.0  # Warn if waiting > 2s for connection
+
 # Build kwargs adaptively depending on dialect.  SQLite (including
 # the memory uri used in unit tests) does not accept pool_size/max_overflow
 # and will raise a TypeError if passed, so we omit them.
@@ -66,6 +69,34 @@ def _after_cursor_execute(conn, cursor, statement, parameters, context, executem
             duration_ms=round(elapsed_ms, 1),
             statement=statement[:200],  # truncate to avoid log spam
         )
+
+
+@event.listens_for(engine.sync_engine, "connect")
+def _on_connect(dbapi_conn, connection_record):
+    """Track connection creation time for pool monitoring."""
+    connection_record.info["connected_at"] = time.perf_counter()
+
+
+@event.listens_for(engine.sync_engine, "checkout")
+def _on_checkout(dbapi_conn, connection_record, connection_proxy):
+    """Monitor connection checkout time to detect pool exhaustion."""
+    checkout_start = connection_record.info.get("checkout_start")
+    if checkout_start:
+        wait_time = time.perf_counter() - checkout_start
+        if wait_time > POOL_CHECKOUT_THRESHOLD_SECONDS:
+            logger.warning(
+                "Slow connection pool checkout",
+                wait_seconds=round(wait_time, 2),
+                pool_size=engine.pool.size(),
+                overflow=engine.pool.overflow(),
+                checkedin=engine.pool.checkedin(),
+            )
+
+
+@event.listens_for(engine.sync_engine, "checkin")
+def _on_checkin(dbapi_conn, connection_record):
+    """Track when connection is returned to pool."""
+    connection_record.info["checkout_start"] = time.perf_counter()
 
 
 async def get_db():

@@ -15,8 +15,8 @@ logger = structlog.get_logger()
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, redis_url: str = None):
         super().__init__(app)
+        # Store redis_url only for fallback in development/testing
         self.redis_url = redis_url or settings.REDIS_URL
-        self._redis = None
 
         # Rate limits (authenticated, by org)
         self.general_limit = 30    # requests per minute
@@ -28,10 +28,30 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.auth_limit = 20   # attempts per 15 minutes
         self.auth_window = 900  # 15 minutes
 
-    async def _get_redis(self):
-        if self._redis is None:
-            self._redis = redis.from_url(self.redis_url)
-        return self._redis
+    async def _get_redis(self, request: Request):
+        """Get Redis connection from app state (shared pool).
+
+        Falls back to creating a temporary connection only in development
+        if the shared pool is unavailable.
+        """
+        # First, try to use the shared Redis pool from app.state
+        redis_conn = getattr(request.app.state, "redis", None)
+        if redis_conn:
+            return redis_conn
+
+        # Fallback for development/testing only
+        logger.warning(
+            "rate_limit_using_temporary_redis",
+            msg="Shared Redis pool unavailable, creating temporary connection. This should not happen in production."
+        )
+
+        # In production, fail-closed to avoid bypassing rate limits
+        if settings.APP_ENV == "production":
+            logger.error("rate_limit_redis_unavailable", msg="Shared Redis pool unavailable in production")
+            return None
+
+        # Development fallback: create temporary connection
+        return redis.from_url(self.redis_url)
 
     async def _get_org_id_from_token(self, request: Request) -> Optional[str]:
         """Extract org_id from JWT token in Authorization header and honor blocklist."""
@@ -43,10 +63,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         try:
             # Check Redis blocklist: if token is revoked, treat as no org_id.
-            r = await self._get_redis()
-            is_blocked = await r.get(f"blocklist:{token}")
-            if is_blocked:
-                return None
+            r = await self._get_redis(request)
+            if r is not None:
+                is_blocked = await r.get(f"blocklist:{token}")
+                if is_blocked:
+                    return None
         except Exception:
             # On Redis failure, fall back to decoding the token without blocklist enforcement here.
             pass
@@ -67,10 +88,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return forwarded_for.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
 
-    async def _check_rate_limit(self, org_id: str, endpoint: str, limit: int, window: int) -> tuple[bool, int]:
+    async def _check_rate_limit(self, request: Request, org_id: str, endpoint: str, limit: int, window: int) -> tuple[bool, int]:
         """Check if request is within rate limit. Returns (allowed, retry_after)."""
         try:
-            r = await self._get_redis()
+            r = await self._get_redis(request)
+            if r is None:
+                # Redis unavailable in production - fail closed for security
+                if settings.APP_ENV == "production":
+                    logger.error("rate_limit_enforced_without_redis", org_id=org_id)
+                    return False, window
+                # In development, fail open
+                logger.warning("rate_limit_bypassed_redis_unavailable", org_id=org_id)
+                return True, 0
+
             key = f"ratelimit:{org_id}:{endpoint}:{window}"
 
             # Atomic INCR avoids the GET → INCR race condition
@@ -85,8 +115,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
             return True, 0
         except Exception as e:
-            # If Redis fails, allow the request (fail open)
-            logger.error("Rate limit check failed", error=str(e))
+            # If Redis operation fails, log and decide based on environment
+            logger.error("rate_limit_check_failed", error=str(e), org_id=org_id)
+            # In production, fail closed to prevent abuse
+            if settings.APP_ENV == "production":
+                return False, window
+            # In development, fail open for convenience
             return True, 0
 
     async def dispatch(self, request: Request, call_next):
@@ -102,7 +136,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if any(path.startswith(route) for route in auth_routes):
             client_ip = self._get_client_ip(request)
             allowed, retry_after = await self._check_rate_limit(
-                f"ip:{client_ip}", "auth", self.auth_limit, self.auth_window
+                request, f"ip:{client_ip}", "auth", self.auth_limit, self.auth_window
             )
             if not allowed:
                 logger.warning("Auth rate limit exceeded", ip=client_ip, path=path)
@@ -123,10 +157,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         is_upload = path.endswith("/upload") or "/upload" in path
 
         if is_upload:
-            allowed, retry_after = await self._check_rate_limit(org_id, "upload", self.upload_limit, self.upload_window)
+            allowed, retry_after = await self._check_rate_limit(request, org_id, "upload", self.upload_limit, self.upload_window)
         else:
             allowed, retry_after = await self._check_rate_limit(
-                org_id, "general", self.general_limit, self.general_window
+                request, org_id, "general", self.general_limit, self.general_window
             )
 
         if not allowed:
