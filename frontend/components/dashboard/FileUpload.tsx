@@ -138,7 +138,7 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
             key="file-selected"
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[6px] border border-[#333333] bg-[#111111] p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
+            className="rounded-[6px] border border-[#333333] bg-[#111111] p-4 flex items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="h-10 w-10 shrink-0 bg-[#1C1C1C] border border-[#333333] rounded-[4px] flex items-center justify-center">

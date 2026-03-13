@@ -67,8 +67,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-h-full">
-      <div className="flex flex-col gap-6 w-full">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full min-h-full">
+      <div className="flex flex-col items-start gap-6 w-full">
 
         {/* Header */}
         <motion.div
@@ -150,7 +150,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.35 }}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 rounded-[4px] bg-[#111111] border border-[#333333]"
+            className="flex items-center gap-3 px-4 py-3 rounded-[4px] bg-[#111111] border border-[#333333]"
           >
             <div className="h-1.5 w-1.5 rounded-full bg-[#0070F3] shrink-0" />
             <span className="text-[11px] font-mono text-[#888888]">

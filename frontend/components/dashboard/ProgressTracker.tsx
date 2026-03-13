@@ -32,9 +32,9 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
   const progress = data?.progress || 0
 
   return (
-    <div className="w-full max-w-2xl mx-auto py-8">
+    <div className="w-full max-w-2xl py-8 text-left">
       {/* Header */}
-      <div className="mb-10 text-center">
+      <div className="mb-10 text-left">
         <div className={cn(
           "text-[10px] font-mono px-2 py-1 rounded-[2px] mb-4 mx-auto w-fit uppercase tracking-widest border",
           isFailed ? "bg-[#2A0808] text-[#FF4444] border-[#5C1A1A]" : 
