@@ -15,7 +15,7 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen w-full flex relative overflow-hidden bg-[#000000]">
       {/* Left panel | branding */}
-      <div className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden border-r border-[#333333] bg-[#111111]">
+      <div className="hidden lg:flex max-w-[480px] w-full flex-col justify-between p-12 relative overflow-hidden border-r border-[#333333] bg-[#111111]">
         
         {/* Vercel Edge subtle grid background instead of glowing orbs */}
         <div className="absolute inset-0 pointer-events-none opacity-20"
@@ -101,7 +101,7 @@ export default function AuthLayout({
           </Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12 w-full">
           <div className="relative z-10 w-full max-w-[400px]">
             <PageTransition>
               {children}

@@ -15,7 +15,6 @@ from app.models.job_transition import JobTransition
 from app.models.pipeline_telemetry import PipelineTelemetry
 
 # Ensure steps are registered
-from app.pipeline import steps
 from app.pipeline.llm_enricher import DatasetProfile, classify_table_types
 from app.pipeline.pipeline_steps import (
     STATUS_TO_STEP,
@@ -200,14 +199,6 @@ async def run_analysis_pipeline(ctx: dict, job_id: str, from_step: str = None, s
             steps = get_pipeline_steps()
             total_steps = len(steps)
 
-            STEP_TO_JOB_STATUS = {
-                "parsing": JobStatus.PARSING,
-                "schema": JobStatus.DETECTING_SCHEMA,
-                "stats": JobStatus.ANALYZING,
-                "llm": JobStatus.ENRICHING,
-                "dashboard": JobStatus.BUILDING,
-            }
-
             # Precompute reverse mapping from pipeline step name to JobStatus
             # (excluding terminal states) to avoid rebuilding it in the loop.
             STEP_TO_STATUS = {
@@ -281,7 +272,7 @@ async def run_analysis_pipeline(ctx: dict, job_id: str, from_step: str = None, s
                         f"Step '{step.name}' timed out: {str(e)}",
                         error_code="STEP_TIMEOUT",
                         retryable=True,
-                    )
+                    ) from e
 
                 # After stats are available, derive dataset_profile and active sub-pipelines once.
                 if step.name == "stats" and context.dataset_profile is None and context.schema is not None:

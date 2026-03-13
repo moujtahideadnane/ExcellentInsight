@@ -18,11 +18,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.redis_url = redis_url or settings.REDIS_URL
         self._redis = None
 
-        # Rate limits
-        self.general_limit = 30  # requests per minute
-        self.upload_limit = 10  # uploads per hour
-        self.general_window = 60  # seconds
+        # Rate limits (authenticated, by org)
+        self.general_limit = 30    # requests per minute
+        self.upload_limit = 10     # uploads per hour
+        self.general_window = 60   # seconds
         self.upload_window = 3600  # seconds
+
+        # Rate limits (unauthenticated auth endpoints, by IP) — brute-force guard
+        self.auth_limit = 20   # attempts per 15 minutes
+        self.auth_window = 900  # 15 minutes
 
     async def _get_redis(self):
         if self._redis is None:
@@ -55,6 +59,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         except Exception:
             return None
 
+    def _get_client_ip(self, request: Request) -> str:
+        """Extract the real client IP, respecting X-Forwarded-For from a trusted proxy."""
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            # X-Forwarded-For can be a comma-separated list; the first entry is the client IP
+            return forwarded_for.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
+
     async def _check_rate_limit(self, org_id: str, endpoint: str, limit: int, window: int) -> tuple[bool, int]:
         """Check if request is within rate limit. Returns (allowed, retry_after)."""
         try:
@@ -78,20 +90,36 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return True, 0
 
     async def dispatch(self, request: Request, call_next):
-        # Skip rate limiting for public routes
         path = request.url.path
-        public_routes = ["/health", "/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh"]
 
-        if any(path.startswith(route) for route in public_routes):
+        # Health check is always free — never rate-limited
+        if path == "/health":
             return await call_next(request)
 
-        # Get org_id from token
+        # Auth endpoints: IP-based rate limiting to prevent brute-force attacks.
+        # These used to be whitelisted entirely, which allowed unlimited login attempts.
+        auth_routes = ["/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh"]
+        if any(path.startswith(route) for route in auth_routes):
+            client_ip = self._get_client_ip(request)
+            allowed, retry_after = await self._check_rate_limit(
+                f"ip:{client_ip}", "auth", self.auth_limit, self.auth_window
+            )
+            if not allowed:
+                logger.warning("Auth rate limit exceeded", ip=client_ip, path=path)
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many attempts. Please try again later.", "retry_after": retry_after},
+                    headers={"Retry-After": str(retry_after)},
+                )
+            return await call_next(request)
+
+        # For all other routes: require a token for org-based rate limiting
         org_id = await self._get_org_id_from_token(request)
         if not org_id:
-            # No token, skip rate limiting (will be caught by auth middleware)
+            # No valid token — the auth middleware will handle the 401
             return await call_next(request)
 
-        # Determine rate limit based on endpoint
+        # Determine rate limit tier based on endpoint
         is_upload = path.endswith("/upload") or "/upload" in path
 
         if is_upload:

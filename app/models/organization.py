@@ -16,5 +16,5 @@ class Organization(Base):
     llm_tokens_used_total: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(server_default=text("now()"))
 
-    users: Mapped[list["User"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
-    jobs: Mapped[list["AnalysisJob"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    users: Mapped[list["User"]] = relationship(back_populates="organization", cascade="all, delete-orphan")  # noqa: F821
+    jobs: Mapped[list["AnalysisJob"]] = relationship(back_populates="organization", cascade="all, delete-orphan")  # noqa: F821

@@ -6,7 +6,7 @@ Supports PDF and Excel export formats with professional styling.
 
 import io
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import structlog
 import xlsxwriter

@@ -10,10 +10,6 @@ from app.pipeline.schema_detector import DetectedSchema
 from app.pipeline.stats_engine import FileStats
 from app.utils.columns import get_valid_column
 from app.utils.llm_validation import validate_llm_output
-from app.utils.sanitization import (
-    sanitize_for_llm,
-    sanitize_sheet_name,
-)
 
 logger = structlog.get_logger()
 
@@ -684,7 +680,6 @@ def _infer_join_keys(join: Dict[str, Any], schema: DetectedSchema) -> None:
     common_lower = set(c.lower() for c in left_cols).intersection(c.lower() for c in right_cols)
     if common_lower:
         cl = {c.lower(): c for c in left_cols}
-        cr = {c.lower(): c for c in right_cols}
         k = sorted(common_lower)[0]
         join["on"] = cl[k]
 

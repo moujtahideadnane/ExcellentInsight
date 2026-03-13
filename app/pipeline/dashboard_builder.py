@@ -125,33 +125,7 @@ def smart_format_value(val: Optional[float], unit: Optional[str], fmt: Optional[
     """
     if val is None:
         return val, unit
-    if fmt == "percentage":
-        return round(float(val), 4), None
 
-    # Performance: O(1) set lookup
-    MEASUREMENT_UNITS = {
-        "kg",
-        "g",
-        "t",
-        "lb",
-        "oz",
-        "km",
-        "m",
-        "cm",
-        "mm",
-        "mi",
-        "l",
-        "ml",
-        "cl",
-        "mad",
-        "dh",
-        "€",
-        "$",
-        "£",
-        "usd",
-        "eur",
-        "gbp",
-    }
     # Units that already encode a magnitude — applying M/K prefixes would double-scale.
     MAGNITUDE_UNITS = {
         "billions",
@@ -170,7 +144,6 @@ def smart_format_value(val: Optional[float], unit: Optional[str], fmt: Optional[
         "t",
     }
     unit_norm = unit.strip().lower() if unit else None
-    is_measurement = unit_norm in MEASUREMENT_UNITS
     # Skip magnitude prefix when unit itself already encodes scale
     is_magnitude_unit = unit_norm in MAGNITUDE_UNITS
 

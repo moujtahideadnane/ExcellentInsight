@@ -64,7 +64,7 @@ async def list_jobs(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid status '{status_filter}'. Valid values: {[s.value for s in JobStatus]}",
-            )
+            ) from None
 
     # Apply cursor-based pagination
     if cursor:
@@ -76,7 +76,7 @@ async def list_jobs(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid cursor format. Expected ISO timestamp, got: {cursor}",
-            )
+            ) from None
 
     # Count total for UI (can be expensive - consider caching or removing for very large datasets)
     count_query = (

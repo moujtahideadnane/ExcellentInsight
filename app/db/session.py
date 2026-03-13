@@ -88,7 +88,7 @@ async def set_db_context(session: AsyncSession, org_id: str, user_id: str):
         uuid_module.UUID(user_id)
     except ValueError as e:
         logger.error("Invalid UUID for RLS context", org_id=org_id, user_id=user_id, error=str(e))
-        raise ValueError(f"Invalid UUID format for RLS context: {e}")
+        raise ValueError(f"Invalid UUID format for RLS context: {e}") from e
 
     # Safe to use in SET LOCAL since we've validated it's a UUID
     await session.execute(text(f"SET LOCAL app.current_org_id = '{org_id}'"))

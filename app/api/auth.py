@@ -25,7 +25,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     responses={**RESPONSES_400},
 )
 async def signup(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
-    user = await AuthService.signup(db, user_in)
+    await AuthService.signup(db, user_in)
     # Login immediately after signup
     return await AuthService.login(db, LoginRequest(email=user_in.email, password=user_in.password))
 

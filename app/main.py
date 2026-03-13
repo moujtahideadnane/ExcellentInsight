@@ -124,12 +124,15 @@ async def health_check():
         result["db"] = f"error: {str(e)}"
         result["status"] = "degraded"
 
-    # Check Redis
+    # Check Redis (reuse the shared pool from lifespan — no throwaway connections)
     try:
-        r = redis.from_url(settings.REDIS_URL)
-        await r.ping()
-        await r.aclose()
-        result["redis"] = "ok"
+        r = getattr(app.state, "redis", None)
+        if r:
+            await r.ping()
+            result["redis"] = "ok"
+        else:
+            result["redis"] = "unavailable"
+            result["status"] = "degraded"
     except Exception as e:
         result["redis"] = f"error: {str(e)}"
         result["status"] = "degraded"

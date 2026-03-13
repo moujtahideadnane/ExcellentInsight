@@ -31,4 +31,4 @@ class ApiKey(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=text("now()"))
     expires_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
-    user: Mapped["User"] = relationship(back_populates="api_keys")
+    user: Mapped["User"] = relationship(back_populates="api_keys")  # noqa: F821

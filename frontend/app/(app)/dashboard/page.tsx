@@ -66,8 +66,7 @@ export default function DashboardPage() {
     }
   }
 
-  return (
-    <div className="p-6 lg:p-8 max-w-5xl mx-auto min-h-full">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-h-full">
 
       {/* Header */}
       <motion.div
@@ -95,7 +94,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.4, delay: 0.05 }}
             className="bg-[#111111] border border-[#333333] rounded-[6px] overflow-hidden"
           >
-            <div className="p-6 lg:p-8">
+            <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-6 w-6 rounded-[2px] bg-[#EDEDED] flex items-center justify-center">
                   <Server className="h-3.5 w-3.5 text-[#000000]" />
@@ -168,7 +167,7 @@ export default function DashboardPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.99 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-[#111111] border border-[#333333] rounded-[6px] p-8 lg:p-10 relative overflow-hidden"
+          className="bg-[#111111] border border-[#333333] rounded-[6px] p-6 lg:p-8 relative overflow-hidden"
         >
           <ProgressTracker data={progress} onStop={handleStopAnalysis} />
         </motion.div>

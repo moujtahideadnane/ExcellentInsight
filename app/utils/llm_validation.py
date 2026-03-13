@@ -578,7 +578,6 @@ def validate_charts(
                 if x_col in column_info[sheet] and y_col in column_info[sheet]:
                     x_is_numeric = column_info[sheet][x_col]["is_numeric"]
                     y_is_numeric = column_info[sheet][y_col]["is_numeric"]
-                    x_is_cat = not x_is_numeric and not column_info[sheet][x_col]["is_date"]
                     y_is_cat = not y_is_numeric and not column_info[sheet][y_col]["is_date"]
 
                     if x_is_numeric and y_is_cat:

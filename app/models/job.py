@@ -66,7 +66,7 @@ class AnalysisJob(Base, TenantMixin):
     created_at: Mapped[datetime] = mapped_column(server_default=text("now()"))
     completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
-    organization: Mapped["Organization"] = relationship(back_populates="jobs")
+    organization: Mapped["Organization"] = relationship(back_populates="jobs")  # noqa: F821
 
 
 def _auto_serialize(target, value, oldvalue, initiator):

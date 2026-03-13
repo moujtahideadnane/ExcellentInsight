@@ -118,4 +118,4 @@ async def execute_step_with_timeout(step: PipelineStep, context: PipelineContext
             timeout_seconds=timeout,
             job_id=context.job_id,
         )
-        raise TimeoutError(f"Pipeline step '{step.name}' exceeded timeout of {timeout}s")
+        raise TimeoutError(f"Pipeline step '{step.name}' exceeded timeout of {timeout}s") from None

@@ -239,8 +239,8 @@ export default function LandingClient() {
       </nav>
 
       {/* ── Hero (Monumental Typography & Terminal) ── */}
-      <section className="relative pt-[20vh] pb-[10vh] px-6 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 scroll-tilt-target">
-        <div className="flex-1 flex flex-col items-start gap-8 z-10 w-full">
+      <section className="relative min-h-[85vh] flex items-center py-24 lg:py-32 px-4 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto scroll-tilt-target">
+        <div className="flex-1 flex flex-col items-start gap-8 z-10 w-full mb-16 md:mb-0">
 
           <h1 className="text-[clamp(3.5rem,8vw,6rem)] font-bold leading-[0.9] tracking-tighter">
             Transform Excel <br className="hidden md:block" />
@@ -270,14 +270,14 @@ export default function LandingClient() {
           </motion.div>
 
           {/* Dashboard Metrics Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#333333] border border-[#333333] rounded-[6px] mt-8 overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 w-full">
              {[
                { val: 60, l: 'Sec Analysis', suffix: '' },
                { val: 15, l: 'K+ Files', suffix: '' },
                { val: 99, l: '% Accuracy', suffix: '' },
                { val: 0, l: 'Config', suffix: '' }
              ].map((s, i) => (
-               <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.1 }} className="bg-[#111111] p-4 flex flex-col justify-center items-center gap-1 hover:bg-[#1C1C1C] transition-colors cursor-default">
+               <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.1 }} className="bg-[#111111] p-4 flex flex-col justify-center items-center gap-1 border border-[#333333] rounded-[6px] hover:bg-[#1C1C1C] hover:border-[#888888] transition-colors cursor-default">
                   <span className="font-mono text-[18px] font-medium text-white"><Counter target={s.val} suffix={s.suffix} /></span>
                   <span className="text-[10px] tracking-widest uppercase text-[#888888]">{s.l}</span>
                </motion.div>
@@ -299,7 +299,7 @@ export default function LandingClient() {
       <InferenceEngine />
 
       {/* ── Call To Action ── */}
-      <section className="py-32 px-6 border-t border-[#222222]" id="get-started">
+      <section className="py-24 lg:py-32 px-4 sm:px-6 lg:px-8 border-t border-[#222222] w-full max-w-7xl mx-auto" id="get-started">
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8" data-animate>
           <div className="h-14 w-14 relative bg-white flex items-center justify-center rounded-[10px] overflow-hidden shadow-lg">
              <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-2" />
@@ -342,7 +342,7 @@ export default function LandingClient() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-[#222222] py-12 px-6 md:px-12 text-[#888888] text-[13px] flex flex-col md:flex-row items-center justify-between gap-6 max-w-7xl mx-auto w-full">
+      <footer className="border-t border-[#222222] py-12 px-4 sm:px-6 lg:px-8 text-[#888888] text-[13px] flex flex-col md:flex-row items-center justify-between gap-6 max-w-7xl mx-auto w-full">
          <div className="flex items-center gap-2 font-mono">
             <div className="h-5 w-5 relative bg-white flex items-center justify-center rounded-[3px] overflow-hidden">
                <Image src="/logo3.png" alt="ExcellentInsight Logo" fill className="object-contain p-0.5" />

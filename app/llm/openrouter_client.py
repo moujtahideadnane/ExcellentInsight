@@ -196,6 +196,6 @@ class OpenRouterClient(LLMClient):
                     return LLMResponse(content=content, parsed_json=parsed_json, usage=usage)
                 except Exception as fallback_error:
                     logger.error("Fallback model also failed", error=repr(fallback_error))
-                    raise last_error
+                    raise last_error from fallback_error
 
             raise RuntimeError("LLM API request failed after max retries")

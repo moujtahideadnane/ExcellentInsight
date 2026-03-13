@@ -25,5 +25,5 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(server_default=text("now()"))
 
-    organization: Mapped["Organization"] = relationship(back_populates="users")
-    api_keys: Mapped[list["ApiKey"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    organization: Mapped["Organization"] = relationship(back_populates="users")  # noqa: F821
+    api_keys: Mapped[list["ApiKey"]] = relationship(back_populates="user", cascade="all, delete-orphan")  # noqa: F821

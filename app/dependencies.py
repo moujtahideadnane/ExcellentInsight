@@ -33,7 +33,9 @@ async def get_token(
         )
 
     # Enforce Redis-backed blocklist used by /auth/logout.
-    # If Redis is unavailable, we fail open and treat the token as valid.
+    # SECURITY: In production we fail-closed — a Redis outage means we cannot
+    # verify token revocation, so we reject the request with 503 to avoid
+    # allowing revoked tokens. In development we fail-open for convenience.
     try:
         redis_conn = getattr(request.app.state, "redis", None)
         _managed = False
@@ -50,8 +52,12 @@ async def get_token(
     except HTTPException:
         raise
     except Exception:
-        # On Redis failure, do not block the request solely on revocation check.
-        pass
+        if settings.APP_ENV == "production":
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service temporarily unavailable. Please retry.",
+            ) from None
+        # In development/staging: fail-open so Redis outages don't block local work.
     finally:
         if "redis_conn" in locals() and _managed and redis_conn is not None:
             try:
@@ -76,7 +82,7 @@ async def get_current_user_id(token: str = Depends(get_token)) -> uuid.UUID:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
-        )
+        ) from None
 
 
 async def get_current_org_id(token: str = Depends(get_token)) -> uuid.UUID:
@@ -93,7 +99,7 @@ async def get_current_org_id(token: str = Depends(get_token)) -> uuid.UUID:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
-        )
+        ) from None
 
 
 async def get_rls_db(

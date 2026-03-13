@@ -116,7 +116,7 @@ async def clear_drilldown_cache(
         logger.error("cache_clear_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to clear cache: {str(e)}"
-        )
+        ) from e
 
 
 @router.patch(
@@ -151,7 +151,7 @@ async def update_kpi_formula(
             schema_summary=job.schema_result,
         )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Re-calculation failed: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Re-calculation failed: {str(e)}") from e
 
 
 @router.delete(
@@ -322,10 +322,10 @@ async def drill_down(
         raise HTTPException(
             status_code=404,
             detail=f"Uploaded file no longer available at {job.file_path}",
-        )
+        ) from None
     except Exception as e:
         logger.error("drill_down_parse_failed", job_id=str(job_id), error=str(e))
-        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}") from e
 
     all_dfs: dict = {**parsed_data.dataframes}
 
@@ -477,7 +477,7 @@ async def drill_down(
         return filtered_df.head(100).to_dicts()
 
     except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
     except Exception as e:
         logger.error(
             "drill_down_filter_error",
@@ -486,7 +486,7 @@ async def drill_down(
             value=value,
             error=str(e),
         )
-        raise HTTPException(status_code=400, detail=f"Filtering failed: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Filtering failed: {str(e)}") from e
 
 
 @router.post(
@@ -550,7 +550,7 @@ async def export_pdf(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate PDF export",
-        )
+        ) from e
 
 
 @router.get(
@@ -593,4 +593,4 @@ async def export_excel(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate Excel export",
-        )
+        ) from e

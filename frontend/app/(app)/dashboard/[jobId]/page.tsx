@@ -166,8 +166,8 @@ export default function DashboardDetailPage() {
   if (!data) return null
 
   return (
-    <div className="min-h-screen p-6 lg:p-10 pb-32 bg-[#000000]">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 w-full bg-[#000000]">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* ── Page Header ─────────────────────────────── */}
         <motion.header
@@ -312,7 +312,7 @@ export default function DashboardDetailPage() {
                       )}
                     </div>
 
-                    <div className={cn("p-5", isWide ? "h-[380px]" : "h-[320px]")}>
+                    <div className={cn("p-6", isWide ? "h-[380px]" : "h-[320px]")}>
                       <ChartErrorBoundary>
                         {chart.data && chart.data.length > 0 ? (
                           <ParentSize>

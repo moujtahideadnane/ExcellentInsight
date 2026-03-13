@@ -168,7 +168,7 @@ def with_timeout(timeout_seconds: float):
                     function=func_name,
                     timeout_seconds=timeout_seconds,
                 )
-                raise TimeoutError(f"Function '{func_name}' exceeded timeout of {timeout_seconds}s")
+                raise TimeoutError(f"Function '{func_name}' exceeded timeout of {timeout_seconds}s") from None
 
         return wrapper
 
