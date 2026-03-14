@@ -67,10 +67,8 @@ class JobService:
 
         max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
 
-        # Check total size by seeking to end of FastAPI's spool file
-        await file.seek(0, 2)
-        file_size = await file.tell()
-        await file.seek(0)
+        # Read actual file size from FastAPI metadata
+        file_size = getattr(file, "size", 0)
 
         if file_size > max_bytes:
             await file.close()
@@ -79,8 +77,9 @@ class JobService:
                 detail=f"File exceeds maximum size of {settings.MAX_FILE_SIZE_MB} MB.",
             )
 
-        # Pass underlying SpooledTemporaryFile directly to storage adapter to prevent RAM duplication
-        storage_path = await storage.upload(file.file, storage_filename)
+        # Pass the UploadFile directly to the storage adapter 
+        # (It natively supports async chunked reads)
+        storage_path = await storage.upload(file, storage_filename)
 
         # 3. Create job in DB (not yet committed)
         job = AnalysisJob(
