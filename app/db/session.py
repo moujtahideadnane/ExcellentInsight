@@ -100,8 +100,27 @@ def _on_checkin(dbapi_conn, connection_record):
 
 
 async def get_db():
-    async with async_session_factory() as session:
+    """Dependency that provides a database session with automatic cleanup.
+
+    Ensures that:
+    - Session is properly closed even if exceptions occur
+    - Uncommitted transactions are rolled back to prevent connection hanging
+    - Connection is returned to the pool promptly
+    """
+    session = async_session_factory()
+    try:
         yield session
+    finally:
+        # Ensure any uncommitted transaction is rolled back
+        # This prevents connections from being held with open transactions
+        try:
+            if session.in_transaction():
+                await session.rollback()
+        except Exception as e:
+            logger.warning("Failed to rollback session transaction", error=str(e))
+        finally:
+            # Always close the session to return connection to pool
+            await session.close()
 
 
 async def set_db_context(session: AsyncSession, org_id: str, user_id: str):
