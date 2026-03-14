@@ -155,7 +155,7 @@ async def list_jobs(
 
     from fastapi.responses import JSONResponse
     return JSONResponse(
-        content=response_data.model_dump(),
+        content=response_data.model_dump(mode='json'),
         headers={"ETag": etag, "Cache-Control": "private, max-age=10"}
     )
 
