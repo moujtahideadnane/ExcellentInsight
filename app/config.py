@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     # - Workers (5 jobs × 3 conn avg): ~15 connections
     # - Reserved (admin, monitoring, buffer): ~20 connections
     # Total: 15 + 15 + 20 = 50 ✓
-    DB_POOL_SIZE: int = 10  # Persistent connections for API requests
-    DB_MAX_OVERFLOW: int = 5  # Temporary connections during traffic spikes (15 total max for API)
+    DB_POOL_SIZE: int = 20  # Persistent connections for API requests (increased from 10)
+    DB_MAX_OVERFLOW: int = 10  # Temporary connections during traffic spikes (30 total max for API)
 
     # ── Redis ──
     REDIS_URL: str = "redis://localhost:6379"
