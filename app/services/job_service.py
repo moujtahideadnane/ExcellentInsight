@@ -65,33 +65,22 @@ class JobService:
         job_id = uuid.uuid4()
         storage_filename = f"{org_id}/{job_id}/{safe_name}"
 
-        # Read in chunks to enforce size limit even if client lies about Content-Length
         max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
-        cumulative_size = 0
 
-        # We need a temporary wrapper to feed to storage.upload if it expects a file-like object
-        # or we just use the file.file directly but wrap the read()
+        # Check total size by seeking to end of FastAPI's spool file
+        await file.seek(0, 2)
+        file_size = await file.tell()
+        await file.seek(0)
 
-        import io
+        if file_size > max_bytes:
+            await file.close()
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds maximum size of {settings.MAX_FILE_SIZE_MB} MB.",
+            )
 
-        temp_buffer = io.BytesIO()
-
-        while True:
-            chunk = await file.read(1024 * 1024)  # 1MB chunks
-            if not chunk:
-                break
-            cumulative_size += len(chunk)
-            if cumulative_size > max_bytes:
-                await file.close()
-                raise HTTPException(
-                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                    detail=f"File exceeds maximum size of {settings.MAX_FILE_SIZE_MB} MB.",
-                )
-            temp_buffer.write(chunk)
-
-        temp_buffer.seek(0)
-        storage_path = await storage.upload(temp_buffer, storage_filename)
-        file_size = cumulative_size
+        # Pass underlying SpooledTemporaryFile directly to storage adapter to prevent RAM duplication
+        storage_path = await storage.upload(file.file, storage_filename)
 
         # 3. Create job in DB (not yet committed)
         job = AnalysisJob(
@@ -126,16 +115,14 @@ class JobService:
             from app.workers.queue_config import get_job_priority
             priority = get_job_priority(org_plan)
 
-            # Enqueue job with priority
-            # ARQ doesn't support native priority, but we use defer_by as a workaround:
-            # Higher priority = lower defer time (processed sooner)
-            # Priority 3 (premium): defer_by=0, Priority 2 (pro): defer_by=1, Priority 1 (free): defer_by=2
-            defer_seconds = max(0, 3 - priority)
+            # Removed artificial delay penalty (defer_seconds) to ensure 
+            # sub-1min deployment speed for all development users.
+            defer_seconds = 0
 
             await arq_pool.enqueue_job(
                 "run_analysis_pipeline",
                 str(job.id),
-                _defer_by=defer_seconds if defer_seconds > 0 else None
+                _defer_by=None
             )
 
             logger.info(

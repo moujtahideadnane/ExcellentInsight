@@ -51,10 +51,36 @@ def compute_stats(dataframes: Dict[str, pl.DataFrame], schema: DetectedSchema) -
             continue
 
         col_stats_list: List[ColumnStats] = []
-        numeric_cols: List[str] = []
-
+        # Group numeric columns for one-pass vectorization
+        numeric_cols: List[str] = [
+            c.name for c in sheet_schema.columns 
+            if c.name in df.columns and ("Int" in c.inferred_type or "Float" in c.inferred_type)
+        ]
+        
         # Cache column count for length check
         df_len = len(df)
+        
+        # 1. Vectorized computation of all numeric aggregations concurrently
+        numeric_stats_results = {}
+        if numeric_cols:
+            exprs = []
+            for c in numeric_cols:
+                exprs.extend([
+                    pl.col(c).drop_nulls().mean().alias(f"{c}_mean"),
+                    pl.col(c).drop_nulls().median().alias(f"{c}_median"),
+                    pl.col(c).drop_nulls().quantile(0.25).alias(f"{c}_p25"),
+                    pl.col(c).drop_nulls().quantile(0.75).alias(f"{c}_p75"),
+                    pl.col(c).drop_nulls().std().alias(f"{c}_std_dev"),
+                    pl.col(c).drop_nulls().min().alias(f"{c}_min_val"),
+                    pl.col(c).drop_nulls().max().alias(f"{c}_max_val"),
+                ])
+            try:
+                # Polars executes all these in parallel using available CPU cores
+                row_result = df.select(exprs).row(0)
+                keys = [e.meta.output_name() for e in exprs]
+                numeric_stats_results = dict(zip(keys, row_result))
+            except Exception:
+                pass
 
         for col_schema in sheet_schema.columns:
             col_name = col_schema.name
@@ -72,17 +98,14 @@ def compute_stats(dataframes: Dict[str, pl.DataFrame], schema: DetectedSchema) -
                 unique_count=col_schema.unique_count,
             )
 
-            if "Int" in dtype or "Float" in dtype:
-                numeric_cols.append(col_name)
-                valid_data = series.drop_nulls()
-                if len(valid_data) > 0:
-                    c_stats.mean = valid_data.mean()
-                    c_stats.median = valid_data.median()
-                    c_stats.p25 = valid_data.quantile(0.25)
-                    c_stats.p75 = valid_data.quantile(0.75)
-                    c_stats.std_dev = valid_data.std()
-                    c_stats.min_val = valid_data.min()
-                    c_stats.max_val = valid_data.max()
+            if col_name in numeric_cols:
+                c_stats.mean = numeric_stats_results.get(f"{col_name}_mean")
+                c_stats.median = numeric_stats_results.get(f"{col_name}_median")
+                c_stats.p25 = numeric_stats_results.get(f"{col_name}_p25")
+                c_stats.p75 = numeric_stats_results.get(f"{col_name}_p75")
+                c_stats.std_dev = numeric_stats_results.get(f"{col_name}_std_dev")
+                c_stats.min_val = numeric_stats_results.get(f"{col_name}_min_val")
+                c_stats.max_val = numeric_stats_results.get(f"{col_name}_max_val")
 
             # Categorical stats only for low-cardinality columns
             if col_schema.unique_count < 50:

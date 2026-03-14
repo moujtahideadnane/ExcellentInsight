@@ -17,9 +17,12 @@ class LocalStorageBackend(StorageBackend):
 
         # Reset file pointer to beginning
         file.seek(0)
+        
+        # Increased chunk size to 8MB (8 * 1024 * 1024) for optimized OS page cache / SSD IO
+        chunk_size = 8 * 1024 * 1024
 
         async with aiofiles.open(file_path, "wb") as out_file:
-            while content := file.read(1024 * 1024):  # 1MB chunks
+            while content := file.read(chunk_size):
                 await out_file.write(content)
 
         return str(file_path)
