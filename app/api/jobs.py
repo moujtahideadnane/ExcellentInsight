@@ -142,17 +142,20 @@ async def list_jobs(
         return Response(status_code=304, headers={"ETag": etag})
 
     # Return response with ETag header
-    response_data = {
-        "jobs": jobs,
-        "total": total or 0,
-        "limit": limit,
-        "cursor": next_cursor,
-        "has_more": has_more
-    }
+    # Serialize SQLAlchemy models to Pydantic schemas
+    job_responses = [JobResponse.model_validate(job) for job in jobs]
+
+    response_data = JobListResponse(
+        jobs=job_responses,
+        total=total or 0,
+        limit=limit,
+        cursor=next_cursor,
+        has_more=has_more
+    )
 
     from fastapi.responses import JSONResponse
     return JSONResponse(
-        content=response_data,
+        content=response_data.model_dump(),
         headers={"ETag": etag, "Cache-Control": "private, max-age=10"}
     )
 
@@ -167,7 +170,8 @@ async def get_job(
     current_org_id: uuid.UUID = Depends(get_current_org_id),
     db: AsyncSession = Depends(get_rls_db),
 ):
-    return await get_job_for_tenant(db, job_id, current_org_id)
+    job = await get_job_for_tenant(db, job_id, current_org_id)
+    return JobResponse.model_validate(job)
 
 
 @router.get(
