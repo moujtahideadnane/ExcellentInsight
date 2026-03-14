@@ -34,7 +34,7 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
   return (
     <div className="w-full max-w-2xl mx-auto py-4 text-left">
       {/* Header */}
-      <div className="mb-6 text-left">
+      <div className="mb-8 flex flex-col items-center text-center">
         <div className={cn(
           "text-[10px] font-mono px-2 py-1 rounded-[2px] mb-4 w-fit uppercase tracking-widest border",
           isFailed ? "bg-ve-error-bg text-ve-error border-ve-error-border" : 
@@ -49,9 +49,9 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
         </h2>
         
         {isFailed || isCancelled ? (
-          <div className="space-y-6">
+          <div className="space-y-6 flex flex-col items-center w-full">
             <div className={cn(
-               "max-w-md p-4 rounded-[4px] border text-[12px] font-mono",
+               "max-w-md w-full p-4 rounded-[4px] border text-[12px] font-mono text-left",
                isCancelled ? "bg-amber-950 border-amber-600/30 text-ve-warning" : "bg-ve-error-bg border-ve-error-border text-ve-error"
             )}>
               {data?.message || (isCancelled ? "Process interrupted by user instruction." : "Unhandled exception caught during runtime.")}
@@ -67,14 +67,14 @@ export default function ProgressTracker({ data, onStop }: ProgressTrackerProps) 
             </button>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-5 flex flex-col items-center">
             <p className="max-w-md text-[13px] text-ve-muted font-mono">
               {data?.message || "Awaiting initialization..."}
             </p>
             {onStop && (
               <button
                 onClick={onStop}
-                className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-ve-muted border border-ve-border hover:border-ve-error hover:text-ve-error rounded-[4px] transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-ve-muted border border-ve-border hover:border-ve-error hover:text-ve-error rounded-[4px] transition-colors flex items-center justify-center gap-2"
               >
                 ^C Interrupt
               </button>

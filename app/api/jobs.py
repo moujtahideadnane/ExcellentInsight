@@ -182,24 +182,33 @@ async def job_progress(
     request: Request,
     job_id: uuid.UUID,
     current_org_id: uuid.UUID = Depends(get_current_org_id),
-    db: AsyncSession = Depends(get_rls_db),
 ):
-    job = await get_job_for_tenant(db, job_id, current_org_id)
+    # IMPORTANT: Do NOT inject db as a dependency here because StreamingResponse
+    # would hold the session open for the entire stream duration (potentially minutes).
+    # Instead, create a temporary session just to fetch the initial job state.
+    from app.db.session import async_session_factory
+
+    async with async_session_factory() as db:
+        job = await get_job_for_tenant(db, job_id, current_org_id)
+        # Extract the values we need before closing the session
+        initial_status = job.status
+        initial_progress = job.progress or 0
+        initial_error_message = job.error_message or ""
+        initial_processing_time = job.processing_time_ms
 
     async def event_generator():
         # --- Initial snapshot ---
-        # `job.status` is already a `JobStatus` enum; map it directly via the
-        # central STATUS_TO_STEP mapping to ensure consistency with the worker.
-        frontend_status = SSE_STATUS_MAP.get(job.status, "parsing")
+        # Map the job status to frontend status using the central STATUS_TO_STEP mapping
+        frontend_status = SSE_STATUS_MAP.get(initial_status, "parsing")
 
         initial_state: dict = {
             "status": frontend_status,
-            "progress": job.progress or 0,
-            "message": job.error_message or "",
+            "progress": initial_progress,
+            "message": initial_error_message,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-        if getattr(job, "processing_time_ms", None) is not None:
-            initial_state["processing_time_ms"] = job.processing_time_ms
+        if initial_processing_time is not None:
+            initial_state["processing_time_ms"] = initial_processing_time
 
         yield f"data: {json.dumps(initial_state)}\n\n"
 
@@ -217,7 +226,7 @@ async def job_progress(
             error_state = {
                 "status": "warning",
                 "message": "Live updates unavailable, but job is processing",
-                "progress": job.progress or 0,
+                "progress": initial_progress,
             }
             yield f"data: {json.dumps(error_state)}\n\n"
             return
@@ -231,7 +240,7 @@ async def job_progress(
             error_state = {
                 "status": "warning",
                 "message": "Unable to subscribe to live updates",
-                "progress": job.progress or 0,
+                "progress": initial_progress,
             }
             yield f"data: {json.dumps(error_state)}\n\n"
             return
@@ -264,7 +273,7 @@ async def job_progress(
                     error_state = {
                         "status": "warning",
                         "message": f"Stream error: {str(e)[:100]}",
-                        "progress": job.progress or 0,
+                        "progress": initial_progress,
                     }
                     yield f"data: {json.dumps(error_state)}\n\n"
                     break
