@@ -77,9 +77,9 @@ class JobService:
                 detail=f"File exceeds maximum size of {settings.MAX_FILE_SIZE_MB} MB.",
             )
 
-        # Pass the UploadFile directly to the storage adapter 
-        # (It natively supports async chunked reads)
-        storage_path = await storage.upload(file, storage_filename)
+        # Pass the underlying SpooledTemporaryFile directly to the storage adapter 
+        # (It exposes synchronous read() needed by the aiofiles threadpool)
+        storage_path = await storage.upload(file.file, storage_filename)
 
         # 3. Create job in DB (not yet committed)
         job = AnalysisJob(
