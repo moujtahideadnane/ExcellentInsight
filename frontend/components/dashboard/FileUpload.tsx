@@ -65,9 +65,7 @@ export default function FileUpload({ onUploadSuccess }: FileUploadProps) {
     formData.append('file', file)
 
     try {
-      const response = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const response = await api.post('/upload', formData)
       onUploadSuccess(response.data.job_id)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: string } } }
