@@ -24,6 +24,8 @@ class ParsingStep:
     async def execute(self, context: PipelineContext) -> PipelineContext:
         telemetry = StepTelemetry(step_name=self.name)
         try:
+            # Offload heavy Excel/Calamine parsing to a separate thread
+            # to keep the main Event Loop responsive (fixes UI freezes and ERR_NETWORK)
             parsed_data = await parser.parse_excel(context.file_path, job_id=context.job_id)
             context.dataframes = parsed_data.dataframes
 
@@ -47,7 +49,9 @@ class SchemaStep:
     async def execute(self, context: PipelineContext) -> PipelineContext:
         telemetry = StepTelemetry(step_name=self.name)
         try:
-            context.schema = schema_detector.detect_schema(context.dataframes)
+            import asyncio
+            # Offload CPU-intensive schema detection to thread pool
+            context.schema = await asyncio.to_thread(schema_detector.detect_schema, context.dataframes)
 
             telemetry.columns_processed = sum(len(s.columns) for s in context.schema.sheets)
             telemetry.finish()
@@ -67,7 +71,9 @@ class StatsStep:
     async def execute(self, context: PipelineContext) -> PipelineContext:
         telemetry = StepTelemetry(step_name=self.name)
         try:
-            context.stats = stats_engine.compute_stats(context.dataframes, context.schema)
+            import asyncio
+            # Offload heavy Polars statistics computation to thread pool
+            context.stats = await asyncio.to_thread(stats_engine.compute_stats, context.dataframes, context.schema)
             telemetry.finish()
         except Exception as e:
             telemetry.finish(error=str(e))
@@ -105,7 +111,10 @@ class DashboardStep:
     async def execute(self, context: PipelineContext) -> PipelineContext:
         telemetry = StepTelemetry(step_name=self.name)
         try:
-            context.dashboard = dashboard_builder.build_dashboard(
+            import asyncio
+            # Final dashboard construction in separate thread
+            context.dashboard = await asyncio.to_thread(
+                dashboard_builder.build_dashboard,
                 context.dataframes, context.schema, context.stats, context.enrichment
             )
             telemetry.finish()

@@ -291,22 +291,15 @@ async def load_from_parquet(job_id: str) -> Optional[ParsedData]:
     return ParsedData(sheets=sheets_metadata, dataframes=dataframes)
 
 
-async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedData:
-    # 1. Check for Parquet cache first
-    if job_id:
-        cached = await load_from_parquet(job_id)
-        if cached:
-            return cached
-
+def _parse_excel_sync(file_path: str, settings: Any) -> ParsedData:
+    """Synchronous core of Excel parsing to be run in a thread pool."""
     path = Path(file_path)
     extension = path.suffix.lower()
-
     dataframes = {}
     sheets_metadata = []
 
     if extension == ".csv":
         df = pl.read_csv(file_path)
-        # Normalize columns for CSV too
         df.columns = [normalize_column_name(c) for c in df.columns]
         sheet_name = "default"
         dataframes[sheet_name] = df
@@ -314,36 +307,24 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
             SheetMetadata(name=sheet_name, row_count=df.height, column_count=df.width, columns=df.columns)
         )
     elif extension in [".xlsx", ".xls"]:
-        # 1. Use openpyxl (read_only=True) for lightweight sheet structure analysis
-        # This prevents loading the entire file into RAM, saving ~90% memory
-        settings = get_settings()
         wb = openpyxl.load_workbook(file_path, data_only=True, read_only=True)
         sheet_names = wb.sheetnames[: settings.MAX_SHEETS_PER_FILE]
-        if len(wb.sheetnames) > settings.MAX_SHEETS_PER_FILE:
-            # Log or raise: for now just truncate to first MAX_SHEETS_PER_FILE
-            pass
 
         for name in sheet_names:
             ws = wb[name]
-
-            # 2. Extract first 100 rows for smart detection (Orientation, Headers)
-            # This is fast and memory-safe even on massive sheets
             preview_rows = list(ws.iter_rows(max_row=100, values_only=True))
             if not preview_rows:
                 continue
 
-            # Heuristic: Find header row
             header_idx = 0
             for i, row in enumerate(preview_rows[:20]):
                 if any(v is not None for v in row) and not is_year_or_numeric_only_row(row):
                     header_idx = i
                     break
 
-            # Check for transposed orientation
             is_transposed = detect_transposed_orientation(ws, header_idx=header_idx)
 
             if is_transposed:
-                # Transposed sheets still require manual handling (less common)
                 transposed_data = transpose_worksheet_data(ws)
                 if not transposed_data: continue
                 raw_headers = transposed_data[0]
@@ -351,8 +332,6 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
                 col_dict = {normalize_column_name(str(h)): [r[i] for r in rows] for i, h in enumerate(raw_headers)}
                 df = pl.DataFrame(col_dict)
             else:
-                # 3. Use HIGH PERFORMANCE Polars engine to read the actual data
-                # engine="calamine" is implemented in Rust and is ultra-memory efficient
                 try:
                     df = pl.read_excel(
                         file_path,
@@ -362,21 +341,12 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
                     )
                 except Exception as e:
                     logger.warning("Calamine failed, falling back to basic reader", error=str(e))
-                    # Fallback to standard Polars excel reader
                     df = pl.read_excel(file_path, sheet_name=name)
 
-            # 4. Vectorized Clean and Type Inference (Rust-speed)
-            # Replace slow Python cleaning loop with Polars expressions
             if df.height > 0:
-                # Normalize column names
                 df.columns = [normalize_column_name(c) for c in df.columns]
-                
-                # Perform numeric cleanup on all columns that look numeric
-                # but might be typed as Strings due to formatting ($ symbols, spaces, etc.)
                 for col in df.columns:
                     if df[col].dtype == pl.String:
-                        # Fast vectorized regex cleaning for numeric strings
-                        # Removes spaces, currency symbols, and common group separators
                         try:
                             df = df.with_columns(
                                 pl.col(col)
@@ -384,7 +354,6 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
                                 .cast(pl.Float64, strict=False)
                                 .alias(f"{col}_num")
                             )
-                            # If cast succeeded for enough rows, swap it
                             if df[f"{col}_num"].null_count() < (df.height * 0.8):
                                 df = df.drop(col).rename({f"{col}_num": col})
                             else:
@@ -396,13 +365,30 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
                 sheets_metadata.append(
                     SheetMetadata(name=name, row_count=df.height, column_count=df.width, columns=df.columns)
                 )
-
         wb.close()
     else:
         raise ValueError(f"Format de fichier non supporté : {extension}")
 
+    return ParsedData(sheets=sheets_metadata, dataframes=dataframes)
+
+
+async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedData:
+    """Entry point for parsing, handles caching and thread offloading."""
+    # 1. Check for Parquet cache first
+    if job_id:
+        cached = await load_from_parquet(job_id)
+        if cached:
+            return cached
+
+    import asyncio
+    settings = get_settings()
+
+    # Offload everything to a separate thread to prevent Event Loop heart-attack
+    # Calamine and Polars I/O are the main culprits for OCI instance freezes.
+    parsed_data = await asyncio.to_thread(_parse_excel_sync, file_path, settings)
+
     # 2. Save to Parquet for next time if job_id provided
     if job_id:
-        await save_to_parquet(job_id, dataframes)
+        await save_to_parquet(job_id, parsed_data.dataframes)
 
-    return ParsedData(sheets=sheets_metadata, dataframes=dataframes)
+    return parsed_data

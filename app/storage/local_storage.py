@@ -21,8 +21,15 @@ class LocalStorageBackend(StorageBackend):
         # Increased chunk size to 8MB (8 * 1024 * 1024) for optimized OS page cache / SSD IO
         chunk_size = 8 * 1024 * 1024
 
+        import asyncio
+        loop = asyncio.get_event_loop()
+
         async with aiofiles.open(file_path, "wb") as out_file:
-            while content := file.read(chunk_size):
+            while True:
+                # Read chunk in a thread pool to avoid blocking Event Loop
+                content = await loop.run_in_executor(None, file.read, chunk_size)
+                if not content:
+                    break
                 await out_file.write(content)
 
         return str(file_path)
