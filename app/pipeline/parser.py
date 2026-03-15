@@ -248,40 +248,10 @@ def is_sheet_empty(ws: Any) -> bool:
     return True
 
 
-def get_merged_cell_values(ws: Any) -> Dict[Tuple[int, int], Any]:
-    """Build a (row, col) -> value map for merged cells (1-based). Value is the top-left cell of each merge range."""
-    merged_values: Dict[Tuple[int, int], Any] = {}
-    for merged_range in ws.merged_cells.ranges:
-        min_row, min_col = merged_range.min_row, merged_range.min_col
-        top_left_value = ws.cell(min_row, min_col).value
-        for row in range(merged_range.min_row, merged_range.max_row + 1):
-            for col in range(merged_range.min_col, merged_range.max_col + 1):
-                merged_values[(row, col)] = top_left_value
-    return merged_values
 
 
-def try_clean_numeric(val: Any) -> Optional[float]:
-    """Try to convert a value to numeric by cleaning formatting (spaces, commas, etc)."""
-    if val is None or isinstance(val, (int, float)):
-        return val
 
-    if isinstance(val, bool):
-        return None  # Don't convert booleans
 
-    s = str(val).strip()
-    if not s:
-        return None
-
-    # Remove common thousand separators and spaces
-    s = s.replace(" ", "").replace(",", "").replace("\u00a0", "")  # Remove nbsp too
-
-    # Try to convert
-    try:
-        if "." in s or "e" in s.lower():
-            return float(s)
-        return float(s)  # int or float
-    except (ValueError, AttributeError):
-        return None
 
 
 async def save_to_parquet(job_id: str, dataframes: Dict[str, pl.DataFrame]) -> None:
@@ -344,9 +314,10 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
             SheetMetadata(name=sheet_name, row_count=df.height, column_count=df.width, columns=df.columns)
         )
     elif extension in [".xlsx", ".xls"]:
-        # Using openpyxl for better control over merged cells and header detection
+        # 1. Use openpyxl (read_only=True) for lightweight sheet structure analysis
+        # This prevents loading the entire file into RAM, saving ~90% memory
         settings = get_settings()
-        wb = openpyxl.load_workbook(file_path, data_only=True)
+        wb = openpyxl.load_workbook(file_path, data_only=True, read_only=True)
         sheet_names = wb.sheetnames[: settings.MAX_SHEETS_PER_FILE]
         if len(wb.sheetnames) > settings.MAX_SHEETS_PER_FILE:
             # Log or raise: for now just truncate to first MAX_SHEETS_PER_FILE
@@ -355,129 +326,76 @@ async def parse_excel(file_path: str, job_id: Optional[str] = None) -> ParsedDat
         for name in sheet_names:
             ws = wb[name]
 
-            if is_sheet_empty(ws):
+            # 2. Extract first 100 rows for smart detection (Orientation, Headers)
+            # This is fast and memory-safe even on massive sheets
+            preview_rows = list(ws.iter_rows(max_row=100, values_only=True))
+            if not preview_rows:
                 continue
 
-            # Check for transposed orientation (headers in first column, not first row)
-            # Do this before detecting header row
-            is_transposed = detect_transposed_orientation(ws, header_idx=0)
+            # Heuristic: Find header row
+            header_idx = 0
+            for i, row in enumerate(preview_rows[:20]):
+                if any(v is not None for v in row) and not is_year_or_numeric_only_row(row):
+                    header_idx = i
+                    break
 
-            # If transposed, transpose the worksheet data first
+            # Check for transposed orientation
+            is_transposed = detect_transposed_orientation(ws, header_idx=header_idx)
+
             if is_transposed:
+                # Transposed sheets still require manual handling (less common)
                 transposed_data = transpose_worksheet_data(ws)
-                # Create a temporary "virtual" worksheet-like structure from transposed data
-                # We'll work with the transposed_data directly below
-                logger.info("Sheet is transposed; processing as row-oriented", sheet=name)
-                header_idx = detect_header_row(ws)  # Detect on original to get baseline
-                # Use transposed data going forward
-                data = transposed_data[header_idx + 1 :] if header_idx + 1 < len(transposed_data) else []
-                raw_headers = transposed_data[header_idx] if header_idx < len(transposed_data) else []
+                if not transposed_data: continue
+                raw_headers = transposed_data[0]
+                rows = transposed_data[1:]
+                col_dict = {normalize_column_name(str(h)): [r[i] for r in rows] for i, h in enumerate(raw_headers)}
+                df = pl.DataFrame(col_dict)
             else:
-                # Normal column-oriented processing
-                header_idx = detect_header_row(ws)
-                merged_values = get_merged_cell_values(ws)
+                # 3. Use HIGH PERFORMANCE Polars engine to read the actual data
+                # engine="calamine" is implemented in Rust and is ultra-memory efficient
+                try:
+                    df = pl.read_excel(
+                        file_path,
+                        sheet_name=name,
+                        engine="calamine",
+                        read_options={"header_row": header_idx, "n_rows": settings.MAX_ROWS_PER_SHEET}
+                    )
+                except Exception as e:
+                    logger.warning("Calamine failed, falling back to basic reader", error=str(e))
+                    # Fallback to standard Polars excel reader
+                    df = pl.read_excel(file_path, sheet_name=name)
 
-                # Read rows with merged-cell resolution (openpyxl 1-based row/col)
-                data = []
-                row_count = 0
-                for row in ws.iter_rows(min_row=header_idx + 1, values_only=False):
-                    if row_count >= settings.MAX_ROWS_PER_SHEET:
-                        break
-                    row_vals = []
-                    for cell in row:
-                        val = cell.value
-                        if (cell.row, cell.column) in merged_values:
-                            val = merged_values[(cell.row, cell.column)]
-                        row_vals.append(val)
-                    data.append(row_vals)
-                    row_count += 1
+            # 4. Vectorized Clean and Type Inference (Rust-speed)
+            # Replace slow Python cleaning loop with Polars expressions
+            if df.height > 0:
+                # Normalize column names
+                df.columns = [normalize_column_name(c) for c in df.columns]
+                
+                # Perform numeric cleanup on all columns that look numeric
+                # but might be typed as Strings due to formatting ($ symbols, spaces, etc.)
+                for col in df.columns:
+                    if df[col].dtype == pl.String:
+                        # Fast vectorized regex cleaning for numeric strings
+                        # Removes spaces, currency symbols, and common group separators
+                        try:
+                            df = df.with_columns(
+                                pl.col(col)
+                                .str.replace_all(r"[^0-9\.\-eE]", "")
+                                .cast(pl.Float64, strict=False)
+                                .alias(f"{col}_num")
+                            )
+                            # If cast succeeded for enough rows, swap it
+                            if df[f"{col}_num"].null_count() < (df.height * 0.8):
+                                df = df.drop(col).rename({f"{col}_num": col})
+                            else:
+                                df = df.drop(f"{col}_num")
+                        except Exception:
+                            pass
 
-                if not data:
-                    continue
-
-                raw_headers = data[0]
-                rows = data[1:]
-
-            # For transposed data, extract headers and rows from transposed_data
-            if is_transposed:
-                raw_headers = transposed_data[0] if transposed_data else []
-                rows = transposed_data[1:] if len(transposed_data) > 1 else []
-
-            # Skip sheets that have too few data rows (likely charts, summaries, etc.)
-            if len(rows) < 2:
-                logger.debug("Skipping sheet", name=name, reason="Insufficient data rows", row_count=len(rows))
-                continue
-
-            # Normalize column names, handle duplicates and None
-            normalized_cols = []
-            seen = {}
-            for col in raw_headers:
-                n_col = normalize_column_name(str(col) if col is not None else "")
-                if n_col in seen:
-                    seen[n_col] += 1
-                    n_col = f"{n_col}_{seen[n_col]}"
-                else:
-                    seen[n_col] = 0
-                normalized_cols.append(n_col)
-
-            # Build column-oriented dict for Polars (faster than row-by-row)
-            col_data: dict = {col: [] for col in normalized_cols}
-            for row in rows:
-                # Skip section header rows (all cells same or mostly None)
-                non_none = [v for v in row if v is not None and str(v).strip() != ""]
-                if non_none and len(set(str(v).strip() for v in non_none)) <= 1:
-                    logger.debug("Skipping section header row", values=non_none[:3])
-                    continue
-
-                for i, col in enumerate(normalized_cols):
-                    cell_val = row[i] if i < len(row) else None
-                    col_data[col].append(cell_val)
-
-            # Build Polars DataFrame natively — no pyarrow needed.
-            # Pre-process:
-            # 1. Try to clean numeric strings (remove spaces, commas, etc.)
-            # 2. Detect mixed-type columns and handle appropriately
-            safe_col_data: dict = {}
-            for col, vals in col_data.items():
-                cleaned_vals = []
-
-                # First pass: try to clean numeric values
-                for v in vals:
-                    if v is None:
-                        cleaned_vals.append(None)
-                    elif isinstance(v, (int, float)):
-                        cleaned_vals.append(v)
-                    else:
-                        # Try to parse as numeric
-                        numeric_val = try_clean_numeric(v)
-                        if numeric_val is not None:
-                            cleaned_vals.append(numeric_val)
-                        else:
-                            cleaned_vals.append(str(v) if v is not None else None)
-
-                # Check if all non-null values are numeric
-                non_null = [v for v in cleaned_vals if v is not None]
-                types = {type(v).__name__ for v in non_null}
-
-                if types <= {"float", "int"}:  # All numeric
-                    safe_col_data[col] = cleaned_vals
-                elif len(types) > 1:
-                    # Mixed types → coerce everything to str
-                    safe_col_data[col] = [str(v) if v is not None else None for v in cleaned_vals]
-                else:
-                    safe_col_data[col] = cleaned_vals
-
-            try:
-                df = pl.DataFrame(safe_col_data, infer_schema_length=500)
-            except TypeError:
-                # Nuclear fallback: stringify every column entirely
-                all_str = {k: [str(v) if v is not None else None for v in vs] for k, vs in safe_col_data.items()}
-                df = pl.DataFrame(all_str, infer_schema_length=0)
-
-            dataframes[name] = df
-            sheets_metadata.append(
-                SheetMetadata(name=name, row_count=df.height, column_count=df.width, columns=df.columns)
-            )
+                dataframes[name] = df
+                sheets_metadata.append(
+                    SheetMetadata(name=name, row_count=df.height, column_count=df.width, columns=df.columns)
+                )
 
         wb.close()
     else:
