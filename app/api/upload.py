@@ -40,3 +40,7 @@ async def upload_file(
         storage=storage,
         arq_pool=arq_pool,
     )
+
+@router.post("/debug_upload")
+async def debug_upload(file: UploadFile = File(...)):
+    return {"filename": file.filename}
