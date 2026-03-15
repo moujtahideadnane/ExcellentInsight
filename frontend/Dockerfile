@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Build argument for API URL
-ARG NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+ARG NEXT_PUBLIC_API_URL=https://excellentinsight.onthewifi.com/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Copy package files
